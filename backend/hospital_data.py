@@ -408,6 +408,12 @@ def _haystack(dep: dict) -> str:
     return strip_accents(" ".join(parts))
 
 
+def _compact(text: str) -> str:
+    """Bỏ mọi ký tự không phải chữ/số: 'x-quang' -> 'xquang', giúp khớp khi
+    người dùng gõ liền không khoảng trắng hay dấu gạch nối."""
+    return "".join(ch for ch in strip_accents(text) if ch.isalnum())
+
+
 def get_all() -> list[dict]:
     return DEPARTMENTS
 
@@ -427,19 +433,24 @@ def search(query: str, limit: int = 10) -> list[dict]:
     if not q:
         return []
 
+    q_compact = _compact(q)
     scored: list[tuple[int, dict]] = []
     for dep in DEPARTMENTS:
         name = strip_accents(dep["name"])
+        haystack = _haystack(dep)
         score = 0
         if q in name:
             score += 10
         if name.startswith(q):
             score += 5
-        if q in _haystack(dep):
+        if q in haystack:
             score += 3
+        # khớp khi gõ liền không dấu/khoảng trắng (vd "xquang" ~ "x-quang")
+        elif q_compact and q_compact in _compact(haystack):
+            score += 2
         # khớp theo từng từ trong query
         for word in q.split():
-            if word and word in _haystack(dep):
+            if word and word in haystack:
                 score += 1
         if score > 0:
             scored.append((score, dep))
