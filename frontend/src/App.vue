@@ -4,7 +4,7 @@
 
 <template>
   <header class="app-header">
-    <div class="container">
+    <div class="container inner">
       <RouterLink to="/" class="brand">
         <span class="logo">🏥</span>
         <span>Điều hướng bệnh viện</span>
