@@ -55,16 +55,16 @@ hướng sẽ được ghi rõ trong tài liệu của giai đoạn tương ứn
 
 Cần **2 cửa sổ terminal**: một cho backend, một cho frontend.
 
-### Backend (Flask) — cổng 5001
+### Backend (Flask) — cổng 5057
 ```bash
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env               # (tuỳ chọn) chỉnh PORT, thêm GEMINI_API_KEY sau
-python app.py                      # http://localhost:5001
+python app.py                      # http://localhost:5057
 ```
-> Mặc định cổng 5001 để tránh đụng AirPlay Receiver (chiếm 5000) trên macOS. Đổi bằng biến `PORT`.
+> Mặc định cổng 5057 để tránh đụng AirPlay Receiver (chiếm 5000) trên macOS. Đổi bằng biến `PORT`.
 
 ### Frontend (Vue 3 + Vite) — cổng 5173
 ```bash

@@ -5,7 +5,7 @@ Bước này dựng bộ khung frontend và **tính năng đầu tiên người 
 ## Công nghệ & lý do
 
 - **Vue 3 + `<script setup>` + TypeScript**: component gọn, type an toàn khi map dữ liệu API.
-- **Vite**: dev server nhanh, có sẵn **proxy** `/api → http://localhost:5001` nên frontend gọi
+- **Vite**: dev server nhanh, có sẵn **proxy** `/api → http://localhost:5057` nên frontend gọi
   đường dẫn tương đối, không cần hard-code host hay xử lý CORS khi dev.
 - **vue-router**: chuẩn bị sẵn điều hướng nhiều trang (trang chi tiết thêm ở bước sau).
 
@@ -64,7 +64,7 @@ Khi ráp với giao diện, phát hiện người dùng hay gõ liền như `"xq
 ```bash
 cd frontend
 npm install
-npm run dev        # http://localhost:5173 (cần backend chạy ở cổng 5001)
+npm run dev        # http://localhost:5173 (cần backend chạy ở cổng 5057)
 ```
 
 > Lưu ý: chạy backend trước (`cd backend && python app.py`) để Vite proxy gọi được API.

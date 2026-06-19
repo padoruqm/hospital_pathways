@@ -107,7 +107,7 @@ app = create_app()
 if __name__ == "__main__":
     import os
 
-    # Cổng đọc từ biến môi trường PORT (mặc định 5001 để tránh đụng AirPlay
+    # Cổng đọc từ biến môi trường PORT (mặc định 5057 để tránh đụng AirPlay
     # Receiver chiếm cổng 5000 trên macOS). Production sẽ dùng gunicorn/uwsgi.
-    port = int(os.environ.get("PORT", "5001"))
+    port = int(os.environ.get("PORT", "5057"))
     app.run(host="0.0.0.0", port=port, debug=True)

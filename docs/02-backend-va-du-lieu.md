@@ -69,13 +69,13 @@ cd backend
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python app.py                      # chạy ở http://localhost:5001 (đổi cổng bằng biến PORT)
+python app.py                      # chạy ở http://localhost:5057 (đổi cổng bằng biến PORT)
 ```
 
 Kiểm tra nhanh:
 
 ```bash
-curl http://localhost:5001/api/health
-curl "http://localhost:5001/api/search?q=tim%20mach"
-curl http://localhost:5001/api/departments/tim-mach
+curl http://localhost:5057/api/health
+curl "http://localhost:5057/api/search?q=tim%20mach"
+curl http://localhost:5057/api/departments/tim-mach
 ```

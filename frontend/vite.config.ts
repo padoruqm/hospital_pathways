@@ -2,7 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-// Proxy mọi request /api sang Flask backend (mặc định cổng 5001) trong môi trường dev,
+// Proxy mọi request /api sang Flask backend (mặc định cổng 5057) trong môi trường dev,
 // nhờ vậy frontend gọi đường dẫn tương đối /api/... mà không lo CORS hay hard-code host.
 export default defineConfig({
   plugins: [vue()],
@@ -15,7 +15,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:5001',
+        target: 'http://localhost:5057',
         changeOrigin: true,
       },
     },
