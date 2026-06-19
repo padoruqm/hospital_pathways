@@ -9,7 +9,7 @@ defineProps<{
 </script>
 
 <template>
-  <article class="card dep-card">
+  <RouterLink :to="`/department/${dep.id}`" class="card dep-card">
     <div class="dep-head">
       <h3 class="dep-name">{{ dep.name }}</h3>
       <span class="badge">{{ dep.category }}</span>
@@ -19,12 +19,28 @@ defineProps<{
       <span title="Vị trí">📍 {{ dep.buildingName.split('—')[0].trim() }} · Tầng {{ dep.floor }} · Phòng {{ dep.room }}</span>
       <span title="Giờ làm việc">🕒 {{ dep.hours }}</span>
     </div>
-  </article>
+    <span class="go" aria-hidden="true">Xem đường đi →</span>
+  </RouterLink>
 </template>
 
 <style scoped>
 .dep-card {
+  display: block;
   padding: 14px 16px;
+  transition: border-color 0.15s, transform 0.05s;
+}
+.dep-card:hover {
+  border-color: var(--color-primary);
+}
+.dep-card:active {
+  transform: scale(0.995);
+}
+.go {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
 }
 .dep-head {
   display: flex;
