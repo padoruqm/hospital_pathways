@@ -20,14 +20,20 @@ mỗi commit là một bước có ý nghĩa và đi kèm tài liệu trong thư
 
 ## 2. Trạng thái hiện tại
 
-Dự án đang ở **Giai đoạn 1 — Web nền tảng**. Các giai đoạn:
-
-- [ ] **GĐ 1 — Web nền tảng**: tìm kiếm, trang kết quả, sơ đồ tầng, hướng dẫn đường đi *(đang làm)*
+- [x] **GĐ 1 — Web nền tảng**: tìm kiếm, trang kết quả, sơ đồ tầng, hướng dẫn đường đi ✅
 - [ ] GĐ 2 — AI Hướng A: Chatbot RAG hỏi đáp tiếng Việt (Gemini)
 - [ ] GĐ 3 — AI Hướng B: OCR quét CCCD đăng ký khám nhanh
 - [ ] GĐ 4 — Điểm cộng: tối ưu đường đi (đồ thị), kết hợp 2 hướng AI, admin dashboard
 
 > Chi tiết từng bước xem trong [`docs/`](docs/). Mỗi tài liệu tương ứng một (vài) commit.
+
+### Tính năng đã xong (GĐ 1)
+- Trang chủ với ô tìm kiếm (debounce) + duyệt toàn bộ khoa theo nhóm.
+- Tìm kiếm chịu được gõ có/không dấu, gõ liền (`xquang` ~ `x-quang`).
+- Trang chi tiết khoa: toà nhà, tầng, phòng, giờ làm việc, mô tả.
+- Sơ đồ tầng SVG highlight phòng cần đến.
+- Hướng dẫn đường đi từng bước dạng text.
+- Giao diện mobile-first, xử lý đủ trạng thái loading / error / empty.
 
 ## 3. Cấu trúc thư mục
 
@@ -47,9 +53,37 @@ hướng sẽ được ghi rõ trong tài liệu của giai đoạn tương ứn
 
 ## 5. Cài đặt & chạy
 
-> Hướng dẫn cài đặt chi tiết sẽ được bổ sung dần theo từng giai đoạn. Xem
-> [`docs/01-tong-quan-va-kien-truc.md`](docs/01-tong-quan-va-kien-truc.md) để bắt đầu.
+Cần **2 cửa sổ terminal**: một cho backend, một cho frontend.
+
+### Backend (Flask) — cổng 5001
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env               # (tuỳ chọn) chỉnh PORT, thêm GEMINI_API_KEY sau
+python app.py                      # http://localhost:5001
+```
+> Mặc định cổng 5001 để tránh đụng AirPlay Receiver (chiếm 5000) trên macOS. Đổi bằng biến `PORT`.
+
+### Frontend (Vue 3 + Vite) — cổng 5173
+```bash
+cd frontend
+npm install
+npm run dev                        # http://localhost:5173
+```
+Mở trình duyệt tại **http://localhost:5173**. Vite tự proxy `/api` sang backend nên không cần cấu hình thêm.
+
+## 6. Tài liệu từng bước
+
+| Tài liệu | Nội dung |
+|----------|----------|
+| [00 — Lộ trình](docs/00-lo-trinh.md) | Cách dự án được build từng bước & quy ước commit |
+| [02 — Backend & dữ liệu](docs/02-backend-va-du-lieu.md) | Flask API + mock 20 khoa/phòng + tìm kiếm |
+| [03 — Frontend & tìm kiếm](docs/03-frontend-va-tim-kiem.md) | Scaffold Vue 3 + trang chủ tìm kiếm |
+| [04 — Chi tiết & đường đi](docs/04-trang-chi-tiet-va-duong-di.md) | Trang chi tiết khoa + hướng dẫn từng bước |
+| [05 — Sơ đồ tầng & responsive](docs/05-so-do-tang-va-responsive.md) | Sơ đồ SVG highlight phòng + mobile |
 
 ---
 
-*Tài liệu nộp bài (video demo, danh sách tính năng, khó khăn...) sẽ được hoàn thiện ở cuối dự án.*
+*Tài liệu nộp bài (video demo, khó khăn & cải thiện...) sẽ được hoàn thiện ở cuối dự án.*

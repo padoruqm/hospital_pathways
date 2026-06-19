@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { getDepartment } from '@/api/client'
 import type { DepartmentDetail } from '@/types'
 import DirectionSteps from '@/components/DirectionSteps.vue'
+import FloorMap from '@/components/FloorMap.vue'
 
 const route = useRoute()
 const dep = ref<DepartmentDetail | null>(null)
@@ -52,6 +53,11 @@ watch(
       <div class="info-row"><span class="label">🛗 Tầng</span><span>Tầng {{ dep.floor }}</span></div>
       <div class="info-row"><span class="label">🚪 Phòng</span><span>{{ dep.room }}</span></div>
       <div class="info-row"><span class="label">🕒 Giờ làm việc</span><span>{{ dep.hours }}</span></div>
+    </section>
+
+    <section class="card block">
+      <h2 class="block-title">🗺️ Sơ đồ tầng {{ dep.floor }}</h2>
+      <FloorMap :building="dep.building" :floor="dep.floor" :highlight-id="dep.id" />
     </section>
 
     <section class="card block">
