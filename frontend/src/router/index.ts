@@ -16,6 +16,12 @@ const router = createRouter({
       name: 'department',
       component: () => import('@/views/DepartmentDetailView.vue'),
     },
+    {
+      // Trang quản trị: thêm/sửa/xoá khoa phòng + thống kê lượt tra cứu.
+      path: '/admin',
+      name: 'admin',
+      component: () => import('@/views/AdminView.vue'),
+    },
   ],
   // Khi đổi trang, luôn cuộn lên đầu.
   scrollBehavior() {

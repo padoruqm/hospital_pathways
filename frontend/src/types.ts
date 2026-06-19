@@ -46,3 +46,25 @@ export interface FloorGroup {
   floor: number
   rooms: FloorRoom[]
 }
+
+/** Dữ liệu gửi lên khi tạo/sửa khoa ở trang quản trị. */
+export interface DepartmentInput {
+  name: string
+  category: string
+  building: string
+  floor: number
+  room: string
+  hours: string
+  description: string
+  keywords: string[]
+  symptoms: string[]
+  directions: string[]
+  pos?: Pos
+}
+
+/** Một dòng thống kê lượt xem theo khoa. */
+export interface StatRow {
+  id: string
+  name: string
+  views: number
+}

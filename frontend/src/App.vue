@@ -9,6 +9,7 @@
         <span class="logo">🏥</span>
         <span>Điều hướng bệnh viện</span>
       </RouterLink>
+      <RouterLink to="/admin" class="nav-link">Quản trị</RouterLink>
     </div>
   </header>
 

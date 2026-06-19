@@ -63,7 +63,40 @@ def create_app() -> Flask:
         dep = data.get_by_id(dep_id)
         if dep is None:
             return jsonify({"error": "not_found", "message": "Không tìm thấy khoa/phòng"}), 404
+        data.record_view(dep_id)  # đếm lượt xem cho thống kê admin
         return jsonify(_detail(dep))
+
+    # ---- Endpoint quản trị (CRUD) ----
+    @app.post("/api/departments")
+    def create_department():
+        payload = request.get_json(silent=True) or {}
+        errors = data.validate(payload)
+        if errors:
+            return jsonify({"error": "validation", "messages": errors}), 400
+        dep = data.create_department(payload)
+        return jsonify(_detail(dep)), 201
+
+    @app.put("/api/departments/<dep_id>")
+    def update_department(dep_id: str):
+        payload = request.get_json(silent=True) or {}
+        errors = data.validate(payload)
+        if errors:
+            return jsonify({"error": "validation", "messages": errors}), 400
+        dep = data.update_department(dep_id, payload)
+        if dep is None:
+            return jsonify({"error": "not_found", "message": "Không tìm thấy khoa/phòng"}), 404
+        return jsonify(_detail(dep))
+
+    @app.delete("/api/departments/<dep_id>")
+    def delete_department(dep_id: str):
+        ok = data.delete_department(dep_id)
+        if not ok:
+            return jsonify({"error": "not_found", "message": "Không tìm thấy khoa/phòng"}), 404
+        return jsonify({"deleted": dep_id})
+
+    @app.get("/api/stats")
+    def stats():
+        return jsonify(data.get_stats())
 
     @app.get("/api/search")
     def search():

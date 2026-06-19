@@ -23,17 +23,19 @@ mỗi commit là một bước có ý nghĩa và đi kèm tài liệu trong thư
 - [x] **GĐ 1 — Web nền tảng**: tìm kiếm, trang kết quả, sơ đồ tầng, hướng dẫn đường đi ✅
 - [ ] GĐ 2 — AI Hướng A: Chatbot RAG hỏi đáp tiếng Việt (Gemini)
 - [ ] GĐ 3 — AI Hướng B: OCR quét CCCD đăng ký khám nhanh
-- [ ] GĐ 4 — Điểm cộng: tối ưu đường đi (đồ thị), kết hợp 2 hướng AI, admin dashboard
+- [~] GĐ 4 — Điểm cộng: **admin dashboard (xong)**; tối ưu đường đi (đồ thị) & kết hợp 2 hướng AI (sau)
 
 > Chi tiết từng bước xem trong [`docs/`](docs/). Mỗi tài liệu tương ứng một (vài) commit.
 
-### Tính năng đã xong (GĐ 1)
+### Tính năng đã xong (GĐ 1 + cải thiện)
 - Trang chủ với ô tìm kiếm (debounce) + duyệt toàn bộ khoa theo nhóm.
-- Tìm kiếm chịu được gõ có/không dấu, gõ liền (`xquang` ~ `x-quang`).
+- Tìm kiếm chịu được gõ có/không dấu, gõ liền (`xquang` ~ `x-quang`); **ưu tiên khớp
+  nguyên cụm** nên "đau đầu" và "đau bụng" ra khoa khác nhau.
 - Trang chi tiết khoa: toà nhà, tầng, phòng, giờ làm việc, mô tả.
 - Sơ đồ tầng SVG highlight phòng cần đến.
 - Hướng dẫn đường đi từng bước dạng text.
-- Giao diện mobile-first, xử lý đủ trạng thái loading / error / empty.
+- **Trang quản trị `/admin`**: thêm/sửa/xoá khoa phòng + thống kê lượt tra cứu.
+- Giao diện **xanh da trời**, mobile-first, xử lý đủ trạng thái loading / error / empty.
 
 ## 3. Cấu trúc thư mục
 
@@ -83,6 +85,8 @@ Mở trình duyệt tại **http://localhost:5173**. Vite tự proxy `/api` sang
 | [03 — Frontend & tìm kiếm](docs/03-frontend-va-tim-kiem.md) | Scaffold Vue 3 + trang chủ tìm kiếm |
 | [04 — Chi tiết & đường đi](docs/04-trang-chi-tiet-va-duong-di.md) | Trang chi tiết khoa + hướng dẫn từng bước |
 | [05 — Sơ đồ tầng & responsive](docs/05-so-do-tang-va-responsive.md) | Sơ đồ SVG highlight phòng + mobile |
+| [06 — Giao diện xanh da trời](docs/06-giao-dien-xanh-da-troi.md) | Đổi màu chủ đạo + làm gọn giao diện |
+| [07 — Admin & cải thiện search](docs/07-admin-va-cai-thien-search.md) | Trang quản trị CRUD + sửa tìm kiếm |
 
 ---
 

@@ -422,38 +422,181 @@ def get_by_id(dep_id: str) -> dict | None:
     return next((d for d in DEPARTMENTS if d["id"] == dep_id), None)
 
 
-def search(query: str, limit: int = 10) -> list[dict]:
-    """Tìm kiếm khoa/phòng theo từ khoá (có hỗ trợ gõ không dấu).
+# ---------------------------------------------------------------------------
+# Thao tác quản trị (CRUD) + thống kê lượt xem
+#
+# Dữ liệu được giữ trong bộ nhớ (list DEPARTMENTS ở trên), nên thay đổi qua admin
+# có hiệu lực ngay trong phiên chạy nhưng sẽ reset khi khởi động lại server. Cách
+# này đủ cho demo và giữ code đơn giản; muốn lưu lâu dài có thể đẩy xuống file JSON
+# hoặc CSDL sau mà không đổi giao diện admin.
+# ---------------------------------------------------------------------------
 
-    Cho điểm đơn giản: khớp ở tên > khớp ở từ khoá/triệu chứng. Trả về danh sách
-    đã sắp xếp theo độ liên quan. Đây là tìm kiếm 'cứng' ở GĐ1; phần hiểu ngôn ngữ
-    tự nhiên sẽ do chatbot RAG đảm nhiệm ở GĐ2.
+# Đếm số lượt xem chi tiết theo từng khoa (phục vụ thống kê ở admin).
+_view_counts: dict[str, int] = {}
+
+REQUIRED_FIELDS = ("name", "category", "building", "floor", "room", "hours", "description")
+
+
+def _slugify(text: str) -> str:
+    """Sinh id (slug) từ tên: 'Khoa Tim mạch' -> 'khoa-tim-mach'."""
+    base = strip_accents(text)
+    slug = "".join(ch if ch.isalnum() else "-" for ch in base)
+    slug = "-".join(part for part in slug.split("-") if part)  # gộp dấu - thừa
+    return slug or "khoa"
+
+
+def _unique_id(base_slug: str) -> str:
+    """Đảm bảo id không trùng bằng cách thêm hậu tố số nếu cần."""
+    slug = base_slug
+    i = 2
+    while get_by_id(slug) is not None:
+        slug = f"{base_slug}-{i}"
+        i += 1
+    return slug
+
+
+def validate(payload: dict) -> list[str]:
+    """Kiểm tra dữ liệu đầu vào, trả về danh sách lỗi (rỗng nếu hợp lệ)."""
+    errors: list[str] = []
+    for field in REQUIRED_FIELDS:
+        value = payload.get(field)
+        if value is None or (isinstance(value, str) and not value.strip()):
+            errors.append(f"Thiếu trường bắt buộc: {field}")
+    floor = payload.get("floor")
+    if floor is not None and not isinstance(floor, int):
+        try:
+            int(floor)
+        except (TypeError, ValueError):
+            errors.append("Trường 'floor' phải là số")
+    return errors
+
+
+def _normalize(payload: dict) -> dict:
+    """Chuẩn hoá payload thành 1 bản ghi khoa đầy đủ trường."""
+    return {
+        "name": str(payload["name"]).strip(),
+        "category": str(payload["category"]).strip(),
+        "building": str(payload["building"]).strip(),
+        "floor": int(payload["floor"]),
+        "room": str(payload["room"]).strip(),
+        "hours": str(payload["hours"]).strip(),
+        "description": str(payload["description"]).strip(),
+        "keywords": [s.strip() for s in payload.get("keywords", []) if str(s).strip()],
+        "symptoms": [s.strip() for s in payload.get("symptoms", []) if str(s).strip()],
+        "directions": [s.strip() for s in payload.get("directions", []) if str(s).strip()],
+        "pos": {
+            "x": float(payload.get("pos", {}).get("x", 50)),
+            "y": float(payload.get("pos", {}).get("y", 30)),
+        },
+    }
+
+
+def create_department(payload: dict) -> dict:
+    dep = _normalize(payload)
+    dep["id"] = _unique_id(_slugify(dep["name"]))
+    DEPARTMENTS.append(dep)
+    return dep
+
+
+def update_department(dep_id: str, payload: dict) -> dict | None:
+    dep = get_by_id(dep_id)
+    if dep is None:
+        return None
+    updated = _normalize(payload)
+    updated["id"] = dep_id  # giữ nguyên id cũ
+    dep.clear()
+    dep.update(updated)
+    return dep
+
+
+def delete_department(dep_id: str) -> bool:
+    dep = get_by_id(dep_id)
+    if dep is None:
+        return False
+    DEPARTMENTS.remove(dep)
+    _view_counts.pop(dep_id, None)
+    return True
+
+
+def record_view(dep_id: str) -> None:
+    _view_counts[dep_id] = _view_counts.get(dep_id, 0) + 1
+
+
+def get_stats() -> list[dict]:
+    """Thống kê lượt xem theo khoa, sắp giảm dần."""
+    rows = [
+        {"id": d["id"], "name": d["name"], "views": _view_counts.get(d["id"], 0)}
+        for d in DEPARTMENTS
+    ]
+    rows.sort(key=lambda r: r["views"], reverse=True)
+    return rows
+
+
+def _phrases(dep: dict) -> list[str]:
+    """Danh sách từ khoá + triệu chứng (đã bỏ dấu), mỗi mục là MỘT cụm độc lập.
+
+    Giữ ranh giới từng cụm để khớp 'nguyên cụm' chính xác: ví dụ truy vấn
+    "đau đầu" sẽ khớp cụm "đau đầu kéo dài" nhưng KHÔNG khớp "đau bụng".
+    """
+    return [strip_accents(p) for p in [*dep["keywords"], *dep.get("symptoms", [])]]
+
+
+def search(query: str, limit: int = 10) -> list[dict]:
+    """Tìm kiếm khoa/phòng theo độ liên quan (hỗ trợ gõ có/không dấu, gõ liền).
+
+    Cách cho điểm ưu tiên KHỚP NGUYÊN CỤM, hạ thấp khớp theo từng từ rời:
+
+    1. Cụm truy vấn nằm trong **tên khoa**            → +100 (mạnh nhất)
+    2. Cụm truy vấn nằm trong **1 từ khoá/triệu chứng** → +60
+    3. Cụm truy vấn xuất hiện ở bất kỳ trường nào      → +20
+    4. Nhiều từ rời: chỉ cộng điểm khi **TẤT CẢ** các từ
+       cùng xuất hiện (AND)                            → +15
+
+    Quy tắc (4) là điểm mấu chốt: trước đây mỗi từ khớp đều +1 nên một từ phổ biến
+    như "đau" kéo về hàng loạt khoa, khiến "đau đầu" và "đau bụng" ra gần như giống
+    nhau. Giờ "đau đầu" chỉ khớp cụm trong khoa Thần kinh, "đau bụng" khớp khoa
+    Nội/Sản — đúng nhu cầu. (Việc hiểu câu tự nhiên sâu hơn sẽ do chatbot RAG lo ở GĐ2.)
     """
     q = strip_accents(query).strip()
     if not q:
         return []
 
     q_compact = _compact(q)
+    # các từ phân biệt, dài >= 2 ký tự (bỏ "ở", "và"… cho bớt nhiễu)
+    words = list(dict.fromkeys(w for w in q.split() if len(w) >= 2))
+
     scored: list[tuple[int, dict]] = []
     for dep in DEPARTMENTS:
         name = strip_accents(dep["name"])
         haystack = _haystack(dep)
+        phrases = _phrases(dep)
         score = 0
+
+        # (1) khớp nguyên cụm trong tên khoa
         if q in name:
-            score += 10
-        if name.startswith(q):
-            score += 5
+            score += 100
+        elif q_compact and q_compact in _compact(name):
+            score += 70
+
+        # (2) khớp nguyên cụm với một từ khoá / triệu chứng
+        if any(q in p for p in phrases):
+            score += 60
+        elif q_compact and any(q_compact in _compact(p) for p in phrases):
+            score += 40
+
+        # (3) khớp nguyên cụm ở bất kỳ đâu (mô tả, nhóm, số phòng…)
         if q in haystack:
-            score += 3
-        # khớp khi gõ liền không dấu/khoảng trắng (vd "xquang" ~ "x-quang")
-        elif q_compact and q_compact in _compact(haystack):
-            score += 2
-        # khớp theo từng từ trong query
-        for word in q.split():
-            if word and word in haystack:
-                score += 1
+            score += 20
+
+        # (4) nhiều từ rời: chỉ tính khi TẤT CẢ các từ đều xuất hiện
+        if len(words) >= 2 and all(w in haystack for w in words):
+            score += 15
+
         if score > 0:
             scored.append((score, dep))
+
+    # điểm cao trước; cùng điểm thì xếp theo tên cho ổn định
+    scored.sort(key=lambda pair: (-pair[0], strip_accents(pair[1]["name"])))
 
     scored.sort(key=lambda pair: pair[0], reverse=True)
     return [dep for _, dep in scored[:limit]]

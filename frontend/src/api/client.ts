@@ -3,27 +3,38 @@
 
 import type {
   DepartmentDetail,
+  DepartmentInput,
   DepartmentSummary,
   FloorGroup,
   SearchResponse,
+  StatRow,
 } from '@/types'
 
 const BASE = '/api' // được Vite proxy sang Flask ở môi trường dev
 
-async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(BASE + path)
+// Hàm gọi chung cho mọi method. Đọc message lỗi (kể cả lỗi validation nhiều dòng)
+// từ backend để hiển thị cho người dùng.
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(BASE + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  })
   if (!res.ok) {
-    // Cố đọc message lỗi từ backend nếu có
     let message = `Lỗi ${res.status}`
     try {
       const body = await res.json()
-      if (body?.message) message = body.message
+      if (Array.isArray(body?.messages)) message = body.messages.join('; ')
+      else if (body?.message) message = body.message
     } catch {
       /* bỏ qua, dùng message mặc định */
     }
     throw new Error(message)
   }
   return res.json() as Promise<T>
+}
+
+function getJson<T>(path: string): Promise<T> {
+  return request<T>(path)
 }
 
 export function listDepartments(): Promise<DepartmentSummary[]> {
@@ -40,4 +51,27 @@ export function searchDepartments(query: string): Promise<SearchResponse> {
 
 export function getFloors(): Promise<FloorGroup[]> {
   return getJson<FloorGroup[]>('/floors')
+}
+
+// ---- Quản trị (CRUD) ----
+export function createDepartment(input: DepartmentInput): Promise<DepartmentDetail> {
+  return request<DepartmentDetail>('/departments', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function updateDepartment(id: string, input: DepartmentInput): Promise<DepartmentDetail> {
+  return request<DepartmentDetail>(`/departments/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  })
+}
+
+export function deleteDepartment(id: string): Promise<{ deleted: string }> {
+  return request<{ deleted: string }>(`/departments/${id}`, { method: 'DELETE' })
+}
+
+export function getStats(): Promise<StatRow[]> {
+  return getJson<StatRow[]>('/stats')
 }
