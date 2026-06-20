@@ -9,7 +9,10 @@
         <span class="logo">🏥</span>
         <span>Điều hướng bệnh viện</span>
       </RouterLink>
-      <RouterLink to="/admin" class="nav-link">Admin</RouterLink>
+      <nav class="nav">
+        <RouterLink to="/chat" class="nav-link">Trợ lý AI</RouterLink>
+        <RouterLink to="/admin" class="nav-link">Admin</RouterLink>
+      </nav>
     </div>
   </header>
 
@@ -27,5 +30,13 @@
   min-height: calc(100vh - 130px);
   padding-top: 20px;
   padding-bottom: 20px;
+}
+.nav {
+  display: flex;
+  gap: 4px;
+}
+.nav :global(.router-link-active) {
+  color: var(--color-primary-dark);
+  background: var(--color-bg);
 }
 </style>

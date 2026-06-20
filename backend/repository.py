@@ -5,10 +5,10 @@ liệu. Repository thao tác trên ``hospital_data.DEPARTMENTS`` và dùng ``tex
 chuẩn hoá chuỗi khi tìm kiếm.
 
 Gồm 4 nhóm việc:
-  1. Đọc dữ liệu      : get_all, get_by_id
-  2. Tìm kiếm         : search
-  3. Thêm/sửa/xoá     : validate, create_department, update_department, delete_department
-  4. Thống kê lượt xem: record_view, get_stats
+  1. Đọc dữ liệu       : get_all, get_by_id
+  2. Tìm kiếm          : search
+  3. Thêm/sửa/xoá      : validate, create_department, update_department, delete_department
+  4. Thống kê lượt xem : record_view, get_stats
 
 Dữ liệu nằm trong bộ nhớ nên thay đổi (CRUD) có hiệu lực ngay trong phiên chạy và sẽ
 reset khi khởi động lại server — đủ cho demo và giữ code đơn giản.

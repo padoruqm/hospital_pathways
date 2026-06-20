@@ -2,6 +2,8 @@
 // để dễ xử lý lỗi thống nhất và đổi endpoint một chỗ.
 
 import type {
+  ChatMessage,
+  ChatReply,
   DepartmentDetail,
   DepartmentInput,
   DepartmentSummary,
@@ -74,4 +76,12 @@ export function deleteDepartment(id: string): Promise<{ deleted: string }> {
 
 export function getStats(): Promise<StatRow[]> {
   return getJson<StatRow[]>('/stats')
+}
+
+// ---- Chatbot AI (Gemini) ----
+export function chatWithAI(message: string, history: ChatMessage[]): Promise<ChatReply> {
+  return request<ChatReply>('/ai/chat', {
+    method: 'POST',
+    body: JSON.stringify({ message, history }),
+  })
 }

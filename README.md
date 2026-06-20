@@ -12,7 +12,7 @@
 | ---------- | ---------------------------------- |
 | Frontend   | Vue 3 + TypeScript + Vite          |
 | Backend    | Flask (Python)                     |
-| AI         | Google Gemini API (sẽ thêm sau)    |
+| AI         | Google Gemini API (chatbot `/chat`)|
 
 ## 2. Trạng thái hiện tại
 
@@ -24,6 +24,7 @@
 - Sơ đồ tầng SVG highlight phòng cần đến.
 - Hướng dẫn đường đi từng bước dạng text.
 - **Trang quản trị `/admin`**: thêm/sửa/xoá khoa phòng + thống kê lượt tra cứu.
+- **Trợ lý AI `/chat`**: chatbot Gemini tư vấn khoa khám từ triệu chứng (bản đơn giản, chưa RAG).
 - Giao diện **xanh da trời**, mobile-first, xử lý đủ trạng thái loading / error / empty.
 
 ## 3. Cấu trúc thư mục
@@ -34,6 +35,7 @@ project_hospital_pathways/
 │   ├── hospital_data.py  #   dữ liệu thuần (20 khoa/phòng)
 │   ├── text_utils.py     #   tiện ích chuỗi (bỏ dấu, chuẩn hoá)
 │   ├── repository.py     #   xử lý dữ liệu: đọc/tìm kiếm/CRUD/thống kê
+│   ├── ai.py             #   chatbot Gemini (Blueprint /api/ai/chat)
 │   └── app.py            #   route HTTP, trả JSON
 ├── frontend/             # Vue 3 + TS SPA
 ├── docs/                 # Tài liệu giải thích từng bước build
@@ -82,5 +84,6 @@ Mở trình duyệt tại **http://localhost:5173**. Vite tự proxy `/api` sang
 | [06 — Giao diện xanh da trời](docs/06-giao-dien-xanh-da-troi.md) | Đổi màu chủ đạo + làm gọn giao diện |
 | [07 — Admin & cải thiện search](docs/07-admin-va-cai-thien-search.md) | Trang quản trị CRUD + sửa tìm kiếm |
 | [08 — Cấu trúc backend](docs/08-cau-truc-backend.md) | Từng file backend, liên hệ & luồng dữ liệu |
+| [09 — Chatbot AI (Gemini)](docs/09-ai-chatbot-gemini.md) | Chatbot tư vấn khoa khám, bản đơn giản chưa RAG |
 
 ---

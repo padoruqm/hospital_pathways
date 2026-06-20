@@ -68,3 +68,14 @@ export interface StatRow {
   name: string
   views: number
 }
+
+/** Một lượt trong hội thoại với chatbot AI. */
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  text: string
+}
+
+export interface ChatReply {
+  status: string
+  reply: string
+}

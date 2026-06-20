@@ -14,6 +14,8 @@ Không chứa logic dữ liệu/tìm kiếm (nằm ở ``repository.py``).
     PUT    /api/departments/<id>    -> sửa khoa
     DELETE /api/departments/<id>    -> xoá khoa
     GET    /api/stats               -> thống kê lượt tra cứu theo khoa
+    AI (chatbot Gemini, xem ai.py):
+    POST   /api/ai/chat             -> tư vấn khoa khám từ triệu chứng
 """
 
 from __future__ import annotations
@@ -21,6 +23,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 import repository as repo
+from ai import ai_bp
 
 def _summary(dep: dict) -> dict:
     """Bản rút gọn của một khoa để hiển thị trong danh sách / kết quả tìm kiếm."""
@@ -50,6 +53,9 @@ def create_app() -> Flask:
     app = Flask(__name__)
     # Cho phép frontend (Vite dev server) gọi API trong môi trường dev.
     CORS(app)
+
+    # Nhóm route AI (chatbot Gemini) dưới tiền tố /api/ai -> POST /api/ai/chat
+    app.register_blueprint(ai_bp, url_prefix="/api/ai")
 
     @app.get("/api/health")
     def health():

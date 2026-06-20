@@ -17,6 +17,12 @@ const router = createRouter({
       component: () => import('@/views/DepartmentDetailView.vue'),
     },
     {
+      // Trang trợ lý AI (chatbot Gemini) — hỏi đáp triệu chứng để gợi ý khoa.
+      path: '/chat',
+      name: 'chat',
+      component: () => import('@/views/ChatView.vue'),
+    },
+    {
       // Trang quản trị: thêm/sửa/xoá khoa phòng + thống kê lượt tra cứu.
       path: '/admin',
       name: 'admin',
