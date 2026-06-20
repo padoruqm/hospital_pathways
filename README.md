@@ -4,10 +4,6 @@
 > xem sơ đồ tầng, và nhận hướng dẫn đường đi từng bước. Về sau sẽ tích hợp AI
 > (chatbot RAG + OCR CCCD) để hỗ trợ bệnh nhân nhập viện nhanh hơn.
 
-Đây là bài test tuyển dụng Intern (Web & AI). Repo được xây **từng bước một**,
-mỗi commit là một bước có ý nghĩa và đi kèm tài liệu trong thư mục [`docs/`](docs/)
-để dễ theo dõi tiến độ và giải thích quyết định kỹ thuật.
-
 ---
 
 ## 1. Tech stack
@@ -19,13 +15,6 @@ mỗi commit là một bước có ý nghĩa và đi kèm tài liệu trong thư
 | AI         | Google Gemini API (sẽ thêm sau)    |
 
 ## 2. Trạng thái hiện tại
-
-- [x] **GĐ 1 — Web nền tảng**: tìm kiếm, trang kết quả, sơ đồ tầng, hướng dẫn đường đi ✅
-- [ ] GĐ 2 — AI Hướng A: Chatbot RAG hỏi đáp tiếng Việt (Gemini)
-- [ ] GĐ 3 — AI Hướng B: OCR quét CCCD đăng ký khám nhanh
-- [~] GĐ 4 — Điểm cộng: **admin dashboard (xong)**; tối ưu đường đi (đồ thị) & kết hợp 2 hướng AI (sau)
-
-> Chi tiết từng bước xem trong [`docs/`](docs/). Mỗi tài liệu tương ứng một (vài) commit.
 
 ### Tính năng đã xong (GĐ 1 + cải thiện)
 - Trang chủ với ô tìm kiếm (debounce) + duyệt toàn bộ khoa theo nhóm.
@@ -89,5 +78,3 @@ Mở trình duyệt tại **http://localhost:5173**. Vite tự proxy `/api` sang
 | [07 — Admin & cải thiện search](docs/07-admin-va-cai-thien-search.md) | Trang quản trị CRUD + sửa tìm kiếm |
 
 ---
-
-*Tài liệu nộp bài (video demo, khó khăn & cải thiện...) sẽ được hoàn thiện ở cuối dự án.*

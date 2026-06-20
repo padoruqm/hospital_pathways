@@ -12,7 +12,7 @@ gắn AI (RAG đọc cùng nguồn dữ liệu) nên định hình sớm sẽ ti
 
 | File | Vai trò |
 |------|---------|
-| [`backend/hospital_data.py`](../backend/hospital_data.py) | "Nguồn sự thật": 20 khoa/phòng mock + hàm tìm kiếm |
+| [`backend/hospital_data.py`](../backend/hospital_data.py) | "data": 20 khoa/phòng mock + hàm tìm kiếm |
 | [`backend/app.py`](../backend/app.py) | Flask app, khai báo các route API |
 
 ## Mô hình dữ liệu một khoa/phòng
@@ -41,10 +41,6 @@ Dữ liệu hiện có **20 khoa/phòng** trải trên 2 toà nhà (A, B) và 4 
 tìm kiếm và sơ đồ có ý nghĩa.
 
 ## Tìm kiếm có dấu / không dấu
-
-Hàm `strip_accents()` bỏ dấu tiếng Việt và đưa về chữ thường, nên gõ `"tim mach"`,
-`"Tim mạch"` hay `"TIM"` đều ra Khoa Tim mạch. Hàm `search()` cho điểm đơn giản:
-khớp ở **tên** (điểm cao) > khớp ở **từ khoá/triệu chứng**, rồi sắp xếp theo độ liên quan.
 
 Đây là tìm kiếm "cứng". Việc hiểu câu tự nhiên kiểu *"tôi bị đau ngực"* sẽ do **chatbot
 RAG** đảm nhiệm ở Giai đoạn 2 — nhưng nhờ đã có sẵn `symptoms`, ngay cả tìm kiếm cứng

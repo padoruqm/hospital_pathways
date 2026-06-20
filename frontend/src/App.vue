@@ -9,7 +9,7 @@
         <span class="logo">🏥</span>
         <span>Điều hướng bệnh viện</span>
       </RouterLink>
-      <RouterLink to="/admin" class="nav-link">Quản trị</RouterLink>
+      <RouterLink to="/admin" class="nav-link">Admin</RouterLink>
     </div>
   </header>
 
@@ -18,7 +18,7 @@
   </main>
 
   <footer class="app-footer">
-    Hospital Wayfinding System · Dữ liệu mô phỏng phục vụ demo
+    Hospital Wayfinding System · Hoang Minh Quang dz
   </footer>
 </template>
 

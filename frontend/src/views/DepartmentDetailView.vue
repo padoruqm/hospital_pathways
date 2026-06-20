@@ -1,35 +1,35 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { getDepartment } from '@/api/client'
-import type { DepartmentDetail } from '@/types'
-import DirectionSteps from '@/components/DirectionSteps.vue'
-import FloorMap from '@/components/FloorMap.vue'
+import { onMounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import { getDepartment } from "@/api/client";
+import type { DepartmentDetail } from "@/types";
+import DirectionSteps from "@/components/DirectionSteps.vue";
+import FloorMap from "@/components/FloorMap.vue";
 
-const route = useRoute()
-const dep = ref<DepartmentDetail | null>(null)
-const loading = ref(true)
-const error = ref('')
+const route = useRoute();
+const dep = ref<DepartmentDetail | null>(null);
+const loading = ref(true);
+const error = ref("");
 
 async function load(id: string) {
-  loading.value = true
-  error.value = ''
-  dep.value = null
+  loading.value = true;
+  error.value = "";
+  dep.value = null;
   try {
-    dep.value = await getDepartment(id)
+    dep.value = await getDepartment(id);
   } catch (e) {
-    error.value = (e as Error).message
+    error.value = (e as Error).message;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
-onMounted(() => load(route.params.id as string))
+onMounted(() => load(route.params.id as string));
 // Nếu điều hướng giữa hai khoa khác nhau mà không rời trang, tải lại dữ liệu.
 watch(
   () => route.params.id,
-  (id) => id && load(id as string),
-)
+  (id) => id && load(id as string)
+);
 </script>
 
 <template>
@@ -48,21 +48,39 @@ watch(
       <p class="desc">{{ dep.description }}</p>
     </header>
 
+    <!-- Bảng thông tin -->
     <section class="card info">
-      <div class="info-row"><span class="label">🏢 Toà nhà</span><span>{{ dep.buildingName }}</span></div>
-      <div class="info-row"><span class="label">🛗 Tầng</span><span>Tầng {{ dep.floor }}</span></div>
-      <div class="info-row"><span class="label">🚪 Phòng</span><span>{{ dep.room }}</span></div>
-      <div class="info-row"><span class="label">🕒 Giờ làm việc</span><span>{{ dep.hours }}</span></div>
+      <div class="info-row">
+        <span class="label">🏢 Toà nhà</span><span>{{ dep.buildingName }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">🛗 Tầng</span><span>Tầng {{ dep.floor }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">🚪 Phòng</span><span>{{ dep.room }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">🕒 Giờ làm việc</span><span>{{ dep.hours }}</span>
+      </div>
     </section>
 
+    <!-- Sơ đồ tầng -->
     <section class="card block">
       <h2 class="block-title">🗺️ Sơ đồ tầng {{ dep.floor }}</h2>
-      <FloorMap :building="dep.building" :floor="dep.floor" :highlight-id="dep.id" />
+      <FloorMap
+        :building="dep.building"
+        :floor="dep.floor"
+        :highlight-id="dep.id"
+      />
     </section>
 
+    <!-- Hướng dẫn path -->
     <section class="card block">
       <h2 class="block-title">🧭 Hướng dẫn đường đi</h2>
-      <DirectionSteps :steps="dep.directions" :destination="`${dep.name} — Phòng ${dep.room}`" />
+      <DirectionSteps
+        :steps="dep.directions"
+        :destination="`${dep.name} — Phòng ${dep.room}`"
+      />
     </section>
 
     <section v-if="dep.keywords.length" class="card block">
