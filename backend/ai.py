@@ -19,7 +19,26 @@ load_dotenv()
 
 ai_bp = Blueprint("ai", __name__)
 
-MODEL = "gemini-2.5-flash"  # nhẹ, nhanh, chi phí thấp — hợp làm chatbot
+# Cho phép đổi model qua biến môi trường GEMINI_MODEL mà không phải sửa code.
+# Mặc định gemini-2.0-flash vì truy cập rộng rãi ở free tier; nếu key của bạn được
+# cấp quyền model mới hơn, đặt GEMINI_MODEL=gemini-2.5-flash trong .env.
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+
+
+def _friendly_error(raw: str) -> str:
+    """Dịch lỗi thô từ Gemini sang thông báo tiếng Việt dễ hiểu + gợi ý khắc phục."""
+    if "PERMISSION_DENIED" in raw or "403" in raw:
+        return (
+            f"Khoá Gemini không có quyền dùng model '{MODEL}'. Hãy thử đặt "
+            "GEMINI_MODEL=gemini-2.0-flash trong backend/.env, hoặc tạo API key mới "
+            "(chuẩn bắt đầu bằng 'AIza') tại Google AI Studio."
+        )
+    if "RESOURCE_EXHAUSTED" in raw or "429" in raw:
+        return (
+            "Đã hết hạn mức (quota) miễn phí của khoá Gemini. Vui lòng đợi quota reset, "
+            "dùng khoá khác, hoặc bật billing cho project."
+        )
+    return raw
 
 
 def _departments_context() -> str:
@@ -103,4 +122,4 @@ def chat_with_gemini():
         )
         return jsonify({"status": "success", "reply": response.text})
     except Exception as e:  # lỗi mạng/khoá/quota… trả về cho frontend hiển thị
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": _friendly_error(str(e))}), 502
