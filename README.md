@@ -30,11 +30,16 @@
 
 ```
 project_hospital_pathways/
-├── backend/          # Flask API + mock data bệnh viện (thêm ở GĐ 1)
-├── frontend/         # Vue 3 + TS SPA (thêm ở GĐ 1)
-├── docs/             # Tài liệu giải thích từng bước build
+├── backend/              # Flask API + dữ liệu bệnh viện (mock)
+│   ├── hospital_data.py  #   dữ liệu thuần (20 khoa/phòng)
+│   ├── text_utils.py     #   tiện ích chuỗi (bỏ dấu, chuẩn hoá)
+│   ├── repository.py     #   xử lý dữ liệu: đọc/tìm kiếm/CRUD/thống kê
+│   └── app.py            #   route HTTP, trả JSON
+├── frontend/             # Vue 3 + TS SPA
+├── docs/                 # Tài liệu giải thích từng bước build
 └── README.md
 ```
+> Chi tiết cách các file backend liên hệ & lấy dữ liệu: [docs/08](docs/08-cau-truc-backend.md).
 
 ## 4. Hướng AI đã chọn
 
@@ -76,5 +81,6 @@ Mở trình duyệt tại **http://localhost:5173**. Vite tự proxy `/api` sang
 | [05 — Sơ đồ tầng & responsive](docs/05-so-do-tang-va-responsive.md) | Sơ đồ SVG highlight phòng + mobile |
 | [06 — Giao diện xanh da trời](docs/06-giao-dien-xanh-da-troi.md) | Đổi màu chủ đạo + làm gọn giao diện |
 | [07 — Admin & cải thiện search](docs/07-admin-va-cai-thien-search.md) | Trang quản trị CRUD + sửa tìm kiếm |
+| [08 — Cấu trúc backend](docs/08-cau-truc-backend.md) | Từng file backend, liên hệ & luồng dữ liệu |
 
 ---

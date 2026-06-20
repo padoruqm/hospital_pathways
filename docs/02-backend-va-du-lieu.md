@@ -8,11 +8,17 @@ Toàn bộ web xoay quanh dữ liệu khoa/phòng. Khi dữ liệu và API đã 
 giao diện trở nên đơn giản và không phải sửa đi sửa lại. Backend cũng là nơi sau này
 gắn AI (RAG đọc cùng nguồn dữ liệu) nên định hình sớm sẽ tiết kiệm công.
 
-## Hai file chính
+## Các file backend
+
+> Cập nhật: ở bước sau backend đã được **tách thành nhiều file** theo trách nhiệm. Xem
+> giải thích đầy đủ về cấu trúc và luồng dữ liệu trong
+> [08 — Cấu trúc backend](08-cau-truc-backend.md).
 
 | File | Vai trò |
 |------|---------|
-| [`backend/hospital_data.py`](../backend/hospital_data.py) | "data": 20 khoa/phòng mock + hàm tìm kiếm |
+| [`backend/hospital_data.py`](../backend/hospital_data.py) | Dữ liệu thuần: 20 khoa/phòng mock |
+| [`backend/text_utils.py`](../backend/text_utils.py) | Tiện ích chuỗi (bỏ dấu, chuẩn hoá) |
+| [`backend/repository.py`](../backend/repository.py) | Xử lý dữ liệu: đọc, tìm kiếm, CRUD, thống kê |
 | [`backend/app.py`](../backend/app.py) | Flask app, khai báo các route API |
 
 ## Mô hình dữ liệu một khoa/phòng
@@ -41,6 +47,10 @@ Dữ liệu hiện có **20 khoa/phòng** trải trên 2 toà nhà (A, B) và 4 
 tìm kiếm và sơ đồ có ý nghĩa.
 
 ## Tìm kiếm có dấu / không dấu
+
+Tìm kiếm chuẩn hoá truy vấn lẫn dữ liệu giống nhau (bỏ dấu, bỏ ký tự đặc biệt) rồi so
+**chuỗi con**, nên gõ `"tim mach"`, `"Tim mạch"`, `"xquang"` đều ra đúng khoa. Chi tiết
+thuật toán đơn giản này nằm trong [08 — Cấu trúc backend](08-cau-truc-backend.md).
 
 Đây là tìm kiếm "cứng". Việc hiểu câu tự nhiên kiểu *"tôi bị đau ngực"* sẽ do **chatbot
 RAG** đảm nhiệm ở Giai đoạn 2 — nhưng nhờ đã có sẵn `symptoms`, ngay cả tìm kiếm cứng
