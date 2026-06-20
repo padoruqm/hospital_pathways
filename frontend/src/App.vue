@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// Khung ứng dụng: header cố định + vùng nội dung theo route + footer.
+// Khung ứng dụng: header cố định + vùng nội dung theo route + footer + nút chat nổi.
+import FloatingChatButton from '@/components/FloatingChatButton.vue'
 </script>
 
 <template>
@@ -10,7 +11,6 @@
         <span>Điều hướng bệnh viện</span>
       </RouterLink>
       <nav class="nav">
-        <RouterLink to="/chat" class="nav-link">Trợ lý AI</RouterLink>
         <RouterLink to="/admin" class="nav-link">Admin</RouterLink>
       </nav>
     </div>
@@ -23,6 +23,9 @@
   <footer class="app-footer">
     Hospital Wayfinding System · Hoang Minh Quang dz
   </footer>
+
+  <!-- Nút tròn nổi mở trợ lý AI, hiển thị ở mọi trang (trừ chính trang chat). -->
+  <FloatingChatButton />
 </template>
 
 <style scoped>
