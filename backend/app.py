@@ -9,13 +9,17 @@ Không chứa logic dữ liệu/tìm kiếm (nằm ở ``repository.py``).
     GET    /api/departments/<id>    -> chi tiết một khoa (kèm hướng dẫn đường đi)
     GET    /api/search?q=...        -> tìm kiếm khoa/phòng theo từ khoá
     GET    /api/floors              -> các tầng + phòng trên tầng (phục vụ sơ đồ)
+
     Quản trị (ghi):
     POST   /api/departments         -> thêm khoa
     PUT    /api/departments/<id>    -> sửa khoa
     DELETE /api/departments/<id>    -> xoá khoa
     GET    /api/stats               -> thống kê lượt tra cứu theo khoa
     AI (chatbot Gemini, xem ai.py):
-    POST   /api/ai/chat             -> tư vấn khoa khám từ triệu chứng
+    POST   /api/ai/chat             -> tư vấn khoa khám (System Instruction)
+    POST   /api/ai/rag/chat         -> tư vấn khoa khám (RAG, xem ai_rag.py)
+    GET    /api/ai/rag/status       -> tình trạng index RAG
+
 """
 
 from __future__ import annotations
@@ -24,6 +28,7 @@ from flask_cors import CORS
 
 import repository as repo
 from ai import ai_bp
+from ai_rag import ai_rag_bp
 
 def _summary(dep: dict) -> dict:
     """Bản rút gọn của một khoa để hiển thị trong danh sách / kết quả tìm kiếm."""
@@ -56,6 +61,8 @@ def create_app() -> Flask:
 
     # Nhóm route AI (chatbot Gemini) dưới tiền tố /api/ai -> POST /api/ai/chat
     app.register_blueprint(ai_bp, url_prefix="/api/ai")
+    # Chatbot RAG (tra tài liệu) -> POST /api/ai/rag/chat, GET /api/ai/rag/status
+    app.register_blueprint(ai_rag_bp, url_prefix="/api/ai/rag")
 
     @app.get("/api/health")
     def health():

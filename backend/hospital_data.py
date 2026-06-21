@@ -1,4 +1,5 @@
-"""Dữ liệu bệnh viện (mock) — CHỈ chứa dữ liệu, không có logic xử lý.
+"""
+Dữ liệu bệnh viện (mock) — CHỈ chứa dữ liệu, không có logic xử lý.
 
 File này đóng vai trò như một "cơ sở dữ liệu" tĩnh trong bộ nhớ. Mọi thao tác trên
 dữ liệu (đọc, tìm kiếm, thêm/sửa/xoá, thống kê) nằm ở ``repository.py``; các hàm chuẩn
@@ -380,7 +381,6 @@ DEPARTMENTS = [
 ]
 
 # Sảnh / điểm mốc dùng cho hướng dẫn đường đi và (sau này) đồ thị tìm đường.
-# Chưa dùng nhiều ở GĐ1 nhưng khai báo sẵn để các phòng tham chiếu vị trí thang máy.
 LANDMARKS = {
     "cua-chinh": {"name": "Cửa chính Nhà A", "floor": 1, "building": "A", "pos": {"x": 50, "y": 90}},
     "thang-may-A": {"name": "Thang máy Nhà A", "floor": 1, "building": "A", "pos": {"x": 50, "y": 55}},

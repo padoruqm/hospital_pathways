@@ -20,10 +20,10 @@ load_dotenv()
 ai_bp = Blueprint("ai", __name__)
 
 # Cho phép đổi model qua biến môi trường GEMINI_MODEL mà không phải sửa code.
-# Mặc định gemini-2.0-flash vì truy cập rộng rãi ở free tier; nếu key của bạn được
-# cấp quyền model mới hơn, đặt GEMINI_MODEL=gemini-2.5-flash trong .env.
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
-
+MODEL = os.environ.get(
+                        "GEMINI_MODEL",
+                        "gemini-3.1-flash-lite"
+                        )
 
 def _friendly_error(raw: str) -> str:
     """Dịch lỗi thô từ Gemini sang thông báo tiếng Việt dễ hiểu + gợi ý khắc phục."""
@@ -40,7 +40,6 @@ def _friendly_error(raw: str) -> str:
         )
     return raw
 
-
 def _departments_context() -> str:
     """Sinh danh sách khoa/phòng dạng text từ dữ liệu thật (luôn đồng bộ với repository)."""
     lines = []
@@ -52,7 +51,6 @@ def _departments_context() -> str:
             f" | khám/triệu chứng: {symptoms}"
         )
     return "\n".join(lines)
-
 
 def _system_instruction() -> str:
     return (
@@ -68,11 +66,9 @@ def _system_instruction() -> str:
         "- Trả lời gọn trong vài câu, dễ đọc trên điện thoại."
     )
 
-
 # Tạo client một lần, chỉ khi có API key. Nhờ vậy server vẫn chạy bình thường khi chưa
 # cấu hình khoá (các tính năng khác không bị ảnh hưởng), chỉ riêng /chat báo lỗi rõ ràng.
 _client = None
-
 
 def _get_client():
     global _client
@@ -117,7 +113,7 @@ def chat_with_gemini():
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=_system_instruction(),
-                temperature=0.3,  # thấp để trả lời bám dữ liệu, ít "bịa"
+                temperature=0.3,
             ),
         )
         return jsonify({"status": "success", "reply": response.text})

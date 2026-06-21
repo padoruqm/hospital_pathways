@@ -73,9 +73,13 @@ export interface StatRow {
 export interface ChatMessage {
   role: 'user' | 'assistant'
   text: string
+  /** (Chỉ chế độ RAG) các khoa đã được truy hồi làm ngữ cảnh. */
+  sources?: string[]
 }
 
 export interface ChatReply {
   status: string
   reply: string
+  /** (Chỉ chế độ RAG) tên các khoa/phòng đã truy hồi. */
+  sources?: string[]
 }

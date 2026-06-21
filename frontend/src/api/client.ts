@@ -79,8 +79,17 @@ export function getStats(): Promise<StatRow[]> {
 }
 
 // ---- Chatbot AI (Gemini) ----
+// Chế độ "System Instruction": nhồi toàn bộ khoa vào prompt.
 export function chatWithAI(message: string, history: ChatMessage[]): Promise<ChatReply> {
   return request<ChatReply>('/ai/chat', {
+    method: 'POST',
+    body: JSON.stringify({ message, history }),
+  })
+}
+
+// Chế độ "RAG": truy hồi vài khoa liên quan từ tài liệu rồi mới hỏi LLM (kèm sources).
+export function chatWithRAG(message: string, history: ChatMessage[]): Promise<ChatReply> {
+  return request<ChatReply>('/ai/rag/chat', {
     method: 'POST',
     body: JSON.stringify({ message, history }),
   })

@@ -24,7 +24,8 @@
 - Sơ đồ tầng SVG highlight phòng cần đến.
 - Hướng dẫn đường đi từng bước dạng text.
 - **Trang quản trị `/admin`**: thêm/sửa/xoá khoa phòng + thống kê lượt tra cứu.
-- **Trợ lý AI `/chat`**: chatbot Gemini tư vấn khoa khám từ triệu chứng (bản đơn giản, chưa RAG).
+- **Trợ lý AI `/chat`**: chatbot Gemini tư vấn khoa khám — 2 chế độ gạt qua lại:
+  *Hỏi nhanh* (System Instruction) và *RAG* (truy hồi tài liệu + hiển thị nguồn).
 - Giao diện **xanh da trời**, mobile-first, xử lý đủ trạng thái loading / error / empty.
 
 ## 3. Cấu trúc thư mục
@@ -35,7 +36,9 @@ project_hospital_pathways/
 │   ├── hospital_data.py  #   dữ liệu thuần (20 khoa/phòng)
 │   ├── text_utils.py     #   tiện ích chuỗi (bỏ dấu, chuẩn hoá)
 │   ├── repository.py     #   xử lý dữ liệu: đọc/tìm kiếm/CRUD/thống kê
-│   ├── ai.py             #   chatbot Gemini (Blueprint /api/ai/chat)
+│   ├── ai.py             #   chatbot Gemini System Instruction (/api/ai/chat)
+│   ├── ai_rag.py         #   chatbot RAG (/api/ai/rag/chat) + pipeline embedding
+│   ├── data_hospital.md  #   tài liệu kiến thức cho RAG (sinh từ hospital_data)
 │   └── app.py            #   route HTTP, trả JSON
 ├── frontend/             # Vue 3 + TS SPA
 ├── docs/                 # Tài liệu giải thích từng bước build
@@ -85,5 +88,6 @@ Mở trình duyệt tại **http://localhost:5173**. Vite tự proxy `/api` sang
 | [07 — Admin & cải thiện search](docs/07-admin-va-cai-thien-search.md) | Trang quản trị CRUD + sửa tìm kiếm |
 | [08 — Cấu trúc backend](docs/08-cau-truc-backend.md) | Từng file backend, liên hệ & luồng dữ liệu |
 | [09 — Chatbot AI (Gemini)](docs/09-ai-chatbot-gemini.md) | Chatbot tư vấn khoa khám, bản đơn giản chưa RAG |
+| [10 — Chatbot RAG](docs/10-rag-chatbot.md) | RAG: chunking, embedding, vector store, LLM |
 
 ---

@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { nextTick, ref } from 'vue'
-import { chatWithAI } from '@/api/client'
+import { chatWithAI, chatWithRAG } from '@/api/client'
 import type { ChatMessage } from '@/types'
+
+// 2 chế độ AI cho cùng khung chat:
+//  - 'system': nhồi toàn bộ khoa vào prompt (đơn giản)
+//  - 'rag'   : truy hồi vài khoa liên quan từ tài liệu rồi mới hỏi LLM (kèm nguồn)
+const mode = ref<'system' | 'rag'>('rag')
 
 // Hội thoại được giữ ngay trong component (frontend), gửi kèm mỗi lần hỏi để chatbot
 // trả lời có ngữ cảnh. Đơn giản, không cần lưu server.
@@ -35,8 +40,10 @@ async function send(text: string) {
   // Lịch sử gửi lên là toàn bộ hội thoại TRƯỚC câu hỏi hiện tại.
   const history = messages.value.slice(0, -1)
   try {
-    const res = await chatWithAI(content, history)
-    messages.value.push({ role: 'assistant', text: res.reply })
+    const res = mode.value === 'rag'
+      ? await chatWithRAG(content, history)
+      : await chatWithAI(content, history)
+    messages.value.push({ role: 'assistant', text: res.reply, sources: res.sources })
   } catch (e) {
     error.value = (e as Error).message
   } finally {
@@ -51,11 +58,20 @@ async function send(text: string) {
     <header class="chat-head">
       <h1>Trợ lý AI</h1>
       <p>Hỏi đáp bằng tiếng Việt — gợi ý khoa khám từ triệu chứng của bạn.</p>
+      <div class="mode" role="group" aria-label="Chế độ AI">
+        <button :class="{ on: mode === 'rag' }" @click="mode = 'rag'">RAG (tra tài liệu)</button>
+        <button :class="{ on: mode === 'system' }" @click="mode = 'system'">Hỏi nhanh</button>
+      </div>
     </header>
 
     <div ref="listEl" class="messages">
       <div v-for="(m, i) in messages" :key="i" class="msg" :class="m.role">
-        <div class="bubble">{{ m.text }}</div>
+        <div class="bubble">
+          {{ m.text }}
+          <div v-if="m.sources && m.sources.length" class="sources">
+            📚 Nguồn: {{ m.sources.join(' · ') }}
+          </div>
+        </div>
       </div>
       <div v-if="sending" class="msg assistant">
         <div class="bubble typing"><span></span><span></span><span></span></div>
@@ -93,7 +109,36 @@ async function send(text: string) {
 .chat-head p {
   color: var(--color-muted);
   font-size: 0.9rem;
-  margin: 0 0 12px;
+  margin: 0 0 10px;
+}
+.mode {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 3px;
+  margin-bottom: 12px;
+}
+.mode button {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+.mode button.on {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+.sources {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--color-border);
+  font-size: 0.78rem;
+  color: var(--color-muted);
 }
 .messages {
   flex: 1;
