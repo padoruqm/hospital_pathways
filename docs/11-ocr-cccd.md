@@ -33,6 +33,35 @@ Cho bệnh nhân **chụp/tải ảnh CCCD** → hệ thống OCR tự đọc th
 - **Giới tính**: chỉ xét đoạn **ngay sau nhãn "Giới tính"** để tránh dính chữ "Việt **Nam**".
 - **Ngày sinh**: mẫu `dd/mm/yyyy` đầu tiên trong toàn văn bản.
 
+### 🐞 Sửa lỗi: họ tên/quê quán trả về "Full name" / "Place of origin"
+
+**Hiện tượng:** với CCCD thật, kết quả họ tên ra **"Full name"** (và quê quán ra
+**"Place of origin"**) thay vì giá trị thật.
+
+**Sai ở bước nào?** → **Bước (4) trích xuất (hậu xử lý), KHÔNG phải tiền xử lý / text
+detection / text recognition.** PaddleOCR đã *detect* và *recognize* ĐÚNG: nó tách được
+2 dòng riêng biệt —
+
+```
+Dòng nhãn :  "Họ và tên | Full name"   (trên CCCD '|' hay bị đọc thành 'I')
+Dòng giá trị: "NGUYEN VAN AN"           <-- giá trị thật nằm ở DÒNG DƯỚI
+```
+
+Lỗi nằm ở heuristic `_after_label`: nó chỉ lấy text **cùng dòng** với nhãn. Vì trên CCCD,
+nhãn "Họ và tên / Full name" đứng **một mình một dòng** (giá trị ở dòng kế dưới), phần
+"cùng dòng" sau nhãn tiếng Việt chỉ còn lại **nhãn tiếng Anh "Full name"** → bị lấy nhầm
+làm giá trị.
+
+**Cách sửa:**
+1. `_clean_value()` bỏ ký tự ngăn cách đầu/cuối (`/ | I : - .`) và nếu phần còn lại **chỉ
+   là nhãn tiếng Anh** ("full name", "place of origin"…) thì coi như **rỗng**.
+2. `_after_label(..., fallback_next=True)`: khi cùng dòng không có giá trị thật → **lấy dòng
+   kế tiếp**. Áp dụng cho **Họ và tên, Quê quán, Nơi thường trú** (các trường mà CCCD đặt
+   giá trị ở dòng dưới). Các trường cùng dòng (ngày sinh, giới tính, quốc tịch) giữ nguyên.
+
+Nhờ vậy cả 2 bố cục đều đúng: giá trị ở *dòng dưới* (CCCD thật) và giá trị *cùng dòng*
+(ảnh gộp), kể cả khi '|' bị OCR đọc thành 'I'.
+
 ## Đăng ký khám & gợi ý khoa
 
 `POST /api/ocr/register` nhận form (họ tên, ngày sinh… + **lý do khám**) và:
