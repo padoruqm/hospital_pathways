@@ -26,7 +26,6 @@
 - **Trang quản trị `/admin`**: thêm/sửa/xoá khoa phòng + thống kê lượt tra cứu.
 - **Trợ lý AI `/chat`**: chatbot Gemini tư vấn khoa khám — 2 chế độ gạt qua lại:
   *Hỏi nhanh* (System Instruction) và *RAG* (truy hồi tài liệu + hiển thị nguồn).
-- Giao diện **xanh da trời**, mobile-first, xử lý đủ trạng thái loading / error / empty.
 
 ## 3. Cấu trúc thư mục
 
@@ -44,13 +43,10 @@ project_hospital_pathways/
 ├── docs/                 # Tài liệu giải thích từng bước build
 └── README.md
 ```
-> Chi tiết cách các file backend liên hệ & lấy dữ liệu: [docs/08](docs/08-cau-truc-backend.md).
 
 ## 4. Hướng AI đã chọn
 
-Đề cho chọn **một** trong hai hướng AI. Dự án này sẽ làm **cả hai** (Hướng A trước,
-rồi Hướng B) để nhắm thêm điểm cộng "Kết hợp cả hai hướng AI". Lý do chọn từng
-hướng sẽ được ghi rõ trong tài liệu của giai đoạn tương ứng.
+Dự án này sẽ làm **cả hai** (Hướng A trước, rồi Hướng B) 
 
 ## 5. Cài đặt & chạy
 

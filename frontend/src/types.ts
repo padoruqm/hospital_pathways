@@ -69,17 +69,23 @@ export interface StatRow {
   views: number
 }
 
+/** Nguồn (khoa) mà RAG đã truy hồi — kèm id để liên kết sang trang chi tiết. */
+export interface ChatSource {
+  id: string
+  name: string
+}
+
 /** Một lượt trong hội thoại với chatbot AI. */
 export interface ChatMessage {
   role: 'user' | 'assistant'
   text: string
   /** (Chỉ chế độ RAG) các khoa đã được truy hồi làm ngữ cảnh. */
-  sources?: string[]
+  sources?: ChatSource[]
 }
 
 export interface ChatReply {
   status: string
   reply: string
-  /** (Chỉ chế độ RAG) tên các khoa/phòng đã truy hồi. */
-  sources?: string[]
+  /** (Chỉ chế độ RAG) các khoa/phòng đã truy hồi. */
+  sources?: ChatSource[]
 }

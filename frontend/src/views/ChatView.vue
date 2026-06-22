@@ -69,7 +69,11 @@ async function send(text: string) {
         <div class="bubble">
           {{ m.text }}
           <div v-if="m.sources && m.sources.length" class="sources">
-            📚 Nguồn: {{ m.sources.join(' · ') }}
+            📚 Xem chi tiết &amp; đường đi:
+            <template v-for="(s, si) in m.sources" :key="s.id || s.name">
+              <RouterLink v-if="s.id" :to="`/department/${s.id}`" class="src-link">{{ s.name }}</RouterLink>
+              <span v-else>{{ s.name }}</span><span v-if="si < m.sources.length - 1"> · </span>
+            </template>
           </div>
         </div>
       </div>
@@ -139,6 +143,11 @@ async function send(text: string) {
   border-top: 1px dashed var(--color-border);
   font-size: 0.78rem;
   color: var(--color-muted);
+}
+.src-link {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  text-decoration: underline;
 }
 .messages {
   flex: 1;

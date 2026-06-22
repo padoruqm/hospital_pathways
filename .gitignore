@@ -32,6 +32,9 @@ dist-ssr/
 *.sln
 *.sw?
 
+# ---- File thử nghiệm cá nhân (không commit) ----
+backend/testmodel.py
+
 # ---- Build / logs ----
 *.log
 npm-debug.log*

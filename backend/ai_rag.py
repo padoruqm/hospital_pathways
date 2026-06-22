@@ -6,7 +6,7 @@ RAG LÀ GÌ & VÌ SAO CẦN?
 Bản chatbot ở ``ai.py`` nhồi TOÀN BỘ 20 khoa vào System Instruction. Cách đó đơn giản
 nhưng không mở rộng được: khi bệnh viện có hàng trăm khoa/quy định, prompt sẽ quá dài,
 tốn token và model dễ "lạc". RAG giải quyết bằng cách: **chỉ lấy vài đoạn tài liệu liên
-quan nhất tới câu hỏi rồi mới đưa cho LLM trả lời.**
+quan nhất tới câu hỏi rồi mới đưa cho LLM trả lời.**    
 
 Luồng RAG trong file này gồm 5 bước (đọc theo thứ tự các phần đánh số bên dưới):
 
@@ -21,7 +21,7 @@ Luồng RAG trong file này gồm 5 bước (đọc theo thứ tự các phần 
                        prompt = (chunk liên quan) + câu hỏi ──┘─► Gemini ─► trả lời
 
 Endpoint:  POST /api/ai/rag/chat   { "message": str, "history": [{role,text}]? }
-                                   -> { status, reply, sources: [tên khoa đã truy hồi] }
+              -> { status, reply, sources: [{id, name}] }  (id để liên kết sang trang chi tiết)
            GET  /api/ai/rag/status -> tình trạng index (đã build chưa, số chunk…)
 """
 
@@ -41,7 +41,7 @@ load_dotenv()
 ai_rag_bp = Blueprint("ai_rag", __name__)
 
 # Model có thể đổi qua biến môi trường, không cần sửa code.
-CHAT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+CHAT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.1-flash-lite")
 EMBED_MODEL = os.environ.get("GEMINI_EMBED_MODEL", "gemini-embedding-001")
 TOP_K = int(os.environ.get("RAG_TOP_K", "4"))  # số chunk lấy ra cho mỗi câu hỏi
 
@@ -50,7 +50,6 @@ DOC_PATH = Path(__file__).with_name("data_hospital.md")
 
 
 def _friendly_error(raw: str) -> str:
-    """Dịch lỗi thô từ Gemini sang tiếng Việt dễ hiểu (giống ai.py)."""
     if "PERMISSION_DENIED" in raw or "403" in raw:
         return (
             f"Khoá Gemini không có quyền dùng model '{CHAT_MODEL}'/'{EMBED_MODEL}'. "
@@ -99,7 +98,6 @@ def build_document() -> str:
 
     return "\n\n".join(parts) + "\n"
 
-
 def ensure_document() -> str:
     """Đảm bảo file data_hospital.md tồn tại (tự sinh nếu thiếu) rồi trả nội dung."""
     if not DOC_PATH.exists():
@@ -136,6 +134,17 @@ def _chunk_title(chunk: str) -> str:
     return first.replace("## ", "").strip()
 
 
+def _chunk_id(chunk: str) -> str:
+    """Lấy mã khoa (id) từ dòng '- Mã (id): ...' để frontend liên kết sang trang chi tiết.
+
+    Đoạn 'Thông tin chung về toà nhà' không có id -> trả về "" (không liên kết được).
+    """
+    for line in chunk.splitlines():
+        if line.startswith("- Mã (id):"):
+            return line.split(":", 1)[1].strip()
+    return ""
+
+
 # ==========================================================================
 # (3) EMBEDDING — biến văn bản thành vector số
 # --------------------------------------------------------------------------
@@ -145,7 +154,6 @@ def _chunk_title(chunk: str) -> str:
 # để chất lượng truy hồi tốt hơn (đây là khuyến nghị của Google).
 # ==========================================================================
 _client = None
-
 
 def _get_client():
     """Tạo Gemini client một lần. Thiếu API key -> trả None (server vẫn chạy)."""
@@ -197,7 +205,7 @@ def build_index() -> list[dict]:
     chunks = chunk_document(ensure_document())
     vectors = _embed(chunks, "RETRIEVAL_DOCUMENT")
     _index = [
-        {"title": _chunk_title(c), "text": c, "vector": v}
+        {"id": _chunk_id(c), "title": _chunk_title(c), "text": c, "vector": v}
         for c, v in zip(chunks, vectors)
     ]
     return _index
@@ -210,7 +218,12 @@ def retrieve(query: str, k: int = TOP_K) -> list[dict]:
     assert _index is not None
     query_vec = _embed([query], "RETRIEVAL_QUERY")[0]
     scored = [
-        {"title": item["title"], "text": item["text"], "score": _cosine(query_vec, item["vector"])}
+        {
+            "id": item["id"],
+            "title": item["title"],
+            "text": item["text"],
+            "score": _cosine(query_vec, item["vector"]),
+        }
         for item in _index
     ]
     scored.sort(key=lambda x: x["score"], reverse=True)
@@ -270,7 +283,8 @@ def chat_with_rag():
         return jsonify({
             "status": "success",
             "reply": response,
-            "sources": [c["title"] for c in top],  # các khoa đã được truy hồi
+            # mỗi nguồn gồm id + tên để frontend liên kết sang trang chi tiết/đường đi
+            "sources": [{"id": c["id"], "name": c["title"]} for c in top],
         })
     except Exception as e:
         return jsonify({"status": "error", "message": _friendly_error(str(e))}), 502

@@ -53,8 +53,13 @@ giống nhau bằng **cosine similarity** (góc giữa 2 vector, càng gần 1 c
 
 ### (5) LLM — sinh câu trả lời có "grounding"
 Ghép K đoạn liên quan vào System Instruction kèm yêu cầu **chỉ dựa trên ngữ cảnh, không
-bịa**. Gemini (`gemini-2.0-flash`) soạn câu trả lời; API trả về kèm `sources` = tên các
-khoa đã truy hồi để người dùng thấy "AI dựa vào đâu".
+bịa**. Gemini (`gemini-2.0-flash`) soạn câu trả lời; API trả về kèm `sources` = danh sách
+`{id, name}` các khoa đã truy hồi để người dùng thấy "AI dựa vào đâu".
+
+**Liên thông sang trang chi tiết/đường đi:** vì mỗi nguồn có `id`, frontend hiển thị chúng
+thành **liên kết** tới `/department/{id}` — bấm vào là sang đúng trang chi tiết khoa (có
+sơ đồ tầng highlight + hướng dẫn đường đi từng bước). Nhờ vậy chatbot không phải widget rời
+mà nối thẳng vào luồng điều hướng chính của web.
 
 ## Kết quả truy hồi thực tế (đã test)
 
@@ -79,8 +84,8 @@ embedding so với tìm kiếm chuỗi con ở `repository.search`).
 
 - Đăng ký Blueprint trong [`app.py`](../backend/app.py): `url_prefix="/api/ai/rag"`.
 - Frontend [`ChatView.vue`](../frontend/src/views/ChatView.vue) có **nút gạt** chọn
-  *RAG (tra tài liệu)* hoặc *Hỏi nhanh*; chế độ RAG hiển thị dòng **"📚 Nguồn: …"** dưới
-  câu trả lời.
+  *RAG (tra tài liệu)* hoặc *Hỏi nhanh*; chế độ RAG hiển thị dòng **"📚 Xem chi tiết &
+  đường đi: …"** với mỗi khoa là một **liên kết** sang trang chi tiết (`/department/{id}`).
 
 ## Cấu hình (backend/.env)
 
