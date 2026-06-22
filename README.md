@@ -91,5 +91,6 @@ Mở trình duyệt tại **http://localhost:5173**. Vite tự proxy `/api` sang
 | [09 — Chatbot AI (Gemini)](docs/09-ai-chatbot-gemini.md) | Chatbot tư vấn khoa khám, bản đơn giản chưa RAG |
 | [10 — Chatbot RAG](docs/10-rag-chatbot.md) | RAG: chunking, embedding, vector store, LLM |
 | [11 — OCR CCCD (Hướng B)](docs/11-ocr-cccd.md) | PaddleOCR: tiền xử lý → model → trích xuất → đăng ký |
+| [12 — Tổng kết dự án](docs/12-tong-ket.md) | Toàn cảnh: đã làm gì, pipeline, phần chưa ổn, cải thiện |
 
 ---
