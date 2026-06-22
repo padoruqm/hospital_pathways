@@ -1,0 +1,9 @@
+# Phụ thuộc cho Hướng B — OCR quét CCCD (PaddleOCR).
+# TÁCH RIÊNG vì khá nặng và yêu cầu Python <= 3.13 (PaddlePaddle chưa có bản cho 3.14).
+#
+# Cài thêm sau khi đã cài requirements.txt:
+#   pip install -r requirements-ocr.txt
+# Lần quét đầu tiên PaddleOCR sẽ tự tải model (~vài chục MB).
+
+paddleocr==3.7.0
+paddlepaddle==3.3.1

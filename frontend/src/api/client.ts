@@ -8,6 +8,9 @@ import type {
   DepartmentInput,
   DepartmentSummary,
   FloorGroup,
+  OcrFields,
+  RegisterResult,
+  ScanResult,
   SearchResponse,
   StatRow,
 } from '@/types'
@@ -92,5 +95,32 @@ export function chatWithRAG(message: string, history: ChatMessage[]): Promise<Ch
   return request<ChatReply>('/ai/rag/chat', {
     method: 'POST',
     body: JSON.stringify({ message, history }),
+  })
+}
+
+// ---- Hướng B: OCR CCCD + đăng ký khám ----
+// Gửi ảnh dạng multipart/form-data (KHÔNG set Content-Type để trình duyệt tự thêm boundary).
+export async function scanCCCD(file: File): Promise<ScanResult> {
+  const form = new FormData()
+  form.append('image', file)
+  const res = await fetch(`${BASE}/ocr/scan`, { method: 'POST', body: form })
+  if (!res.ok) {
+    let message = `Lỗi ${res.status}`
+    try {
+      const body = await res.json()
+      if (body?.message) message = body.message
+      else if (body?.error) message = body.error
+    } catch {
+      /* dùng message mặc định */
+    }
+    throw new Error(message)
+  }
+  return res.json() as Promise<ScanResult>
+}
+
+export function registerVisit(payload: Partial<OcrFields> & { reason: string }): Promise<RegisterResult> {
+  return request<RegisterResult>('/ocr/register', {
+    method: 'POST',
+    body: JSON.stringify(payload),
   })
 }

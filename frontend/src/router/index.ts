@@ -23,6 +23,12 @@ const router = createRouter({
       component: () => import('@/views/ChatView.vue'),
     },
     {
+      // Hướng B: đăng ký khám nhanh bằng OCR quét CCCD.
+      path: '/register',
+      name: 'register',
+      component: () => import('@/views/RegisterView.vue'),
+    },
+    {
       // Trang quản trị: thêm/sửa/xoá khoa phòng + thống kê lượt tra cứu.
       path: '/admin',
       name: 'admin',

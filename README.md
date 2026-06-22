@@ -1,9 +1,7 @@
 # Hospital Wayfinding System — Hệ thống điều hướng bệnh nhân
-
 > Web giúp bệnh nhân **tự tra cứu và tìm đường** trong bệnh viện: tìm khoa/phòng,
 > xem sơ đồ tầng, và nhận hướng dẫn đường đi từng bước. Về sau sẽ tích hợp AI
 > (chatbot RAG + OCR CCCD) để hỗ trợ bệnh nhân nhập viện nhanh hơn.
-
 ---
 
 ## 1. Tech stack
@@ -26,6 +24,8 @@
 - **Trang quản trị `/admin`**: thêm/sửa/xoá khoa phòng + thống kê lượt tra cứu.
 - **Trợ lý AI `/chat`**: chatbot Gemini tư vấn khoa khám — 2 chế độ gạt qua lại:
   *Hỏi nhanh* (System Instruction) và *RAG* (truy hồi tài liệu + hiển thị nguồn).
+- **Đăng ký khám `/register`** (Hướng B): quét CCCD bằng **PaddleOCR** tự điền form →
+  gợi ý khoa theo lý do khám → cấp số thứ tự ảo + chỉ đường tới phòng chờ.
 
 ## 3. Cấu trúc thư mục
 
@@ -38,6 +38,7 @@ project_hospital_pathways/
 │   ├── ai.py             #   chatbot Gemini System Instruction (/api/ai/chat)
 │   ├── ai_rag.py         #   chatbot RAG (/api/ai/rag/chat) + pipeline embedding
 │   ├── data_hospital.md  #   tài liệu kiến thức cho RAG (sinh từ hospital_data)
+│   ├── ocr.py            #   Hướng B: OCR CCCD (PaddleOCR) + đăng ký khám
 │   └── app.py            #   route HTTP, trả JSON
 ├── frontend/             # Vue 3 + TS SPA
 ├── docs/                 # Tài liệu giải thích từng bước build
@@ -46,7 +47,7 @@ project_hospital_pathways/
 
 ## 4. Hướng AI đã chọn
 
-Dự án này sẽ làm **cả hai** (Hướng A trước, rồi Hướng B) 
+RAG + OCR
 
 ## 5. Cài đặt & chạy
 
@@ -55,13 +56,17 @@ Cần **2 cửa sổ terminal**: một cho backend, một cho frontend.
 ### Backend (Flask) — cổng 5057
 ```bash
 cd backend
-python3 -m venv .venv
+python3.13 -m venv .venv           # dùng Python 3.13 (xem lưu ý OCR bên dưới)
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+pip install -r requirements-ocr.txt   # (tuỳ chọn) bật OCR CCCD — PaddleOCR
 cp .env.example .env               # (tuỳ chọn) chỉnh PORT, thêm GEMINI_API_KEY sau
 python app.py                      # http://localhost:5057
 ```
-> Mặc định cổng 5057 để tránh đụng AirPlay Receiver (chiếm 5000) trên macOS. Đổi bằng biến `PORT`.
+> - Mặc định cổng 5057 để tránh đụng AirPlay Receiver (chiếm 5000) trên macOS. Đổi bằng biến `PORT`.
+> - **OCR (Hướng B)** cần **Python ≤ 3.13** (PaddlePaddle chưa hỗ trợ 3.14) và bước
+>   `pip install -r requirements-ocr.txt`. Bỏ qua bước này thì web vẫn chạy, chỉ phần
+>   *quét ảnh* CCCD báo cần cài; vẫn nhập tay để đăng ký được.
 
 ### Frontend (Vue 3 + Vite) — cổng 5173
 ```bash
@@ -85,5 +90,6 @@ Mở trình duyệt tại **http://localhost:5173**. Vite tự proxy `/api` sang
 | [08 — Cấu trúc backend](docs/08-cau-truc-backend.md) | Từng file backend, liên hệ & luồng dữ liệu |
 | [09 — Chatbot AI (Gemini)](docs/09-ai-chatbot-gemini.md) | Chatbot tư vấn khoa khám, bản đơn giản chưa RAG |
 | [10 — Chatbot RAG](docs/10-rag-chatbot.md) | RAG: chunking, embedding, vector store, LLM |
+| [11 — OCR CCCD (Hướng B)](docs/11-ocr-cccd.md) | PaddleOCR: tiền xử lý → model → trích xuất → đăng ký |
 
 ---

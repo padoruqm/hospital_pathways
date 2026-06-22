@@ -89,3 +89,35 @@ export interface ChatReply {
   /** (Chỉ chế độ RAG) các khoa/phòng đã truy hồi. */
   sources?: ChatSource[]
 }
+
+// ---- Hướng B: OCR CCCD + đăng ký khám ----
+export interface OcrFields {
+  id_number: string
+  full_name: string
+  dob: string
+  sex: string
+  nationality: string
+  hometown: string
+  residence: string
+}
+
+export interface ScanResult {
+  status: string
+  fields: OcrFields
+  raw_lines: string[]
+}
+
+export interface RegisterResult {
+  status: string
+  queue_number: string
+  patient: { full_name: string; reason: string }
+  department: {
+    id: string
+    name: string
+    buildingName: string
+    floor: number
+    room: string
+    hours: string
+  }
+  directions: string[]
+}

@@ -44,7 +44,7 @@ Dùng model `gemini-embedding-001` biến mỗi đoạn thành **vector số** (
 chất lượng truy hồi.
 
 ### (4) Vector store — kho vector + tìm cosine
-Với 21 chunk, lưu **trong bộ nhớ** (list) là quá đủ, không cần CSDL vector nặng. Đo độ
+Với 21 chunk, lưu **trong bộ nhớ** (list) là đủ, không cần CSDL vector như FAISS hay pgvector. Đo độ
 giống nhau bằng **cosine similarity** (góc giữa 2 vector, càng gần 1 càng giống). Lấy
 `TOP_K = 4` đoạn điểm cao nhất.
 
@@ -52,8 +52,7 @@ giống nhau bằng **cosine similarity** (góc giữa 2 vector, càng gần 1 c
 > còn lại giữ nguyên. Index được **build 1 lần rồi cache** trong bộ nhớ.
 
 ### (5) LLM — sinh câu trả lời có "grounding"
-Ghép K đoạn liên quan vào System Instruction kèm yêu cầu **chỉ dựa trên ngữ cảnh, không
-bịa**. Gemini (`gemini-2.0-flash`) soạn câu trả lời; API trả về kèm `sources` = danh sách
+Ghép K đoạn liên quan vào System Instruction kèm yêu cầu **chỉ dựa trên ngữ cảnh, không bịa**. Gemini soạn câu trả lời; API trả về kèm `sources` = danh sách
 `{id, name}` các khoa đã truy hồi để người dùng thấy "AI dựa vào đâu".
 
 **Liên thông sang trang chi tiết/đường đi:** vì mỗi nguồn có `id`, frontend hiển thị chúng
@@ -98,4 +97,3 @@ RAG_TOP_K=4                             # số đoạn truy hồi (tuỳ chọn)
 
 > Lưu ý quota: RAG gọi Gemini **2 nhóm** quota khác nhau (embedding + sinh nội dung). Nếu
 > khoá hết quota phần sinh nội dung, bước truy hồi vẫn chạy nhưng câu trả lời sẽ báo lỗi
-> quota — hãy dùng khoá có hạn mức hoặc bật billing.

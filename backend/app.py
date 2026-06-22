@@ -19,6 +19,9 @@ Không chứa logic dữ liệu/tìm kiếm (nằm ở ``repository.py``).
     POST   /api/ai/chat             -> tư vấn khoa khám (System Instruction)
     POST   /api/ai/rag/chat         -> tư vấn khoa khám (RAG, xem ai_rag.py)
     GET    /api/ai/rag/status       -> tình trạng index RAG
+    OCR CCCD (Hướng B, xem ocr.py):
+    POST   /api/ocr/scan            -> quét ảnh CCCD trích xuất thông tin
+    POST   /api/ocr/register        -> đăng ký khám: gợi ý khoa + số thứ tự ảo
 
 """
 
@@ -29,6 +32,7 @@ from flask_cors import CORS
 import repository as repo
 from ai import ai_bp
 from ai_rag import ai_rag_bp
+from ocr import ocr_bp
 
 def _summary(dep: dict) -> dict:
     """Bản rút gọn của một khoa để hiển thị trong danh sách / kết quả tìm kiếm."""
@@ -59,10 +63,13 @@ def create_app() -> Flask:
     # Cho phép frontend (Vite dev server) gọi API trong môi trường dev.
     CORS(app)
 
+    # Đăng ký blueprint
     # Nhóm route AI (chatbot Gemini) dưới tiền tố /api/ai -> POST /api/ai/chat
     app.register_blueprint(ai_bp, url_prefix="/api/ai")
     # Chatbot RAG (tra tài liệu) -> POST /api/ai/rag/chat, GET /api/ai/rag/status
     app.register_blueprint(ai_rag_bp, url_prefix="/api/ai/rag")
+    # OCR quét CCCD (Hướng B) -> POST /api/ocr/scan, POST /api/ocr/register
+    app.register_blueprint(ocr_bp, url_prefix="/api/ocr")
 
     @app.get("/api/health")
     def health():
@@ -71,7 +78,7 @@ def create_app() -> Flask:
     @app.get("/api/departments")
     def list_departments():
         return jsonify([_summary(d) for d in repo.get_all()])
-
+  
     @app.get("/api/departments/<dep_id>")
     def get_department(dep_id: str):
         dep = repo.get_by_id(dep_id)

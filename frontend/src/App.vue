@@ -11,6 +11,7 @@ import FloatingChatButton from '@/components/FloatingChatButton.vue'
         <span>Điều hướng bệnh viện</span>
       </RouterLink>
       <nav class="nav">
+        <RouterLink to="/register" class="nav-link">Đăng ký khám</RouterLink>
         <RouterLink to="/admin" class="nav-link">Admin</RouterLink>
       </nav>
     </div>
