@@ -18,7 +18,6 @@ const form = reactive({
   full_name: '',
   dob: '',
   id_number: '',
-  sex: '',
   address: '',
   reason: '',
 })
@@ -46,8 +45,7 @@ async function scan() {
     form.full_name = f.full_name || form.full_name
     form.dob = f.dob || form.dob
     form.id_number = f.id_number || form.id_number
-    form.sex = f.sex || form.sex
-    form.address = f.residence || f.hometown || form.address
+    form.address = f.address || form.address
     scanned.value = true
   } catch (e) {
     scanError.value = (e as Error).message
@@ -82,7 +80,7 @@ function reset() {
   file.value = null
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
   previewUrl.value = ''
-  Object.assign(form, { full_name: '', dob: '', id_number: '', sex: '', address: '', reason: '' })
+  Object.assign(form, { full_name: '', dob: '', id_number: '', address: '', reason: '' })
 }
 </script>
 
@@ -142,9 +140,8 @@ function reset() {
           <label>Họ và tên *<input v-model="form.full_name" type="text" /></label>
           <label>Ngày sinh<input v-model="form.dob" type="text" placeholder="dd/mm/yyyy" /></label>
           <label>Số CCCD<input v-model="form.id_number" type="text" /></label>
-          <label>Giới tính<input v-model="form.sex" type="text" /></label>
+          <label>Địa chỉ<input v-model="form.address" type="text" /></label>
         </div>
-        <label class="full">Địa chỉ<input v-model="form.address" type="text" /></label>
         <label class="full">Lý do khám / triệu chứng *
           <textarea v-model="form.reason" rows="2" placeholder="VD: tôi bị đau ngực, khó thở"></textarea>
         </label>

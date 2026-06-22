@@ -18,49 +18,81 @@ Cho bệnh nhân **chụp/tải ảnh CCCD** → hệ thống OCR tự đọc th
 | (1) **Tiền xử lý** | Mở ảnh, xoay đúng chiều theo EXIF, thu nhỏ nếu cạnh > 1600px, tăng tương phản | `preprocess()` (Pillow) |
 | (2) **Model OCR** | PaddleOCR (PP-OCRv*, `lang='vi'`) đọc toàn bộ chữ → danh sách dòng | `_get_engine()` + `engine.predict()` |
 | (3) **Hậu xử lý** | Bỏ khoảng trắng thừa, bỏ dòng rỗng | `postprocess()` |
-| (4) **Trích xuất** | Heuristic/regex lấy: số CCCD, họ tên, ngày sinh, giới tính, quốc tịch, quê quán, nơi thường trú | `extract_fields()` |
+| (4) **Trích xuất** | Heuristic/regex lấy **4 trường**: số CCCD, họ tên, ngày sinh, địa chỉ | `extract_fields()` |
 | (5) **Output** | Trả JSON `{fields, raw_lines}` (kèm dòng thô để đối chiếu) | route `/api/ocr/scan` |
 
 ### Vì sao chọn PaddleOCR & không train?
 - PaddleOCR là **OCR có sẵn (pretrained)**, hỗ trợ **tiếng Việt** tốt, chạy CPU — hợp với
   yêu cầu "cơ bản, không train". Ta chỉ *dùng* model, không huấn luyện.
-- Việc "hiểu" CCCD nằm ở bước (4): nhận diện trường theo **nhãn** ("Họ và tên", "Ngày sinh"…)
+- Việc detect đuúng thông tin CCCD nằm ở bước (4): nhận diện trường theo **nhãn** ("Họ và tên", "Ngày sinh"…)
   và **mẫu** (regex ngày `dd/mm/yyyy`, dãy số 9/12 chữ số cho số CCCD). So khớp nhãn dùng
   `strip_accents` nên gõ có dấu hay không đều khớp.
 
-### Trích xuất — vài mẹo nhỏ
-- **Số CCCD**: dòng nào sau khi bỏ ký tự không phải số còn đúng **9 hoặc 12 chữ số**.
-- **Giới tính**: chỉ xét đoạn **ngay sau nhãn "Giới tính"** để tránh dính chữ "Việt **Nam**".
-- **Ngày sinh**: mẫu `dd/mm/yyyy` đầu tiên trong toàn văn bản.
+### Giải thích kỹ BƯỚC 4 — trích xuất 4 trường
 
-### 🐞 Sửa lỗi: họ tên/quê quán trả về "Full name" / "Place of origin"
-
-**Hiện tượng:** với CCCD thật, kết quả họ tên ra **"Full name"** (và quê quán ra
-**"Place of origin"**) thay vì giá trị thật.
-
-**Sai ở bước nào?** → **Bước (4) trích xuất (hậu xử lý), KHÔNG phải tiền xử lý / text
-detection / text recognition.** PaddleOCR đã *detect* và *recognize* ĐÚNG: nó tách được
-2 dòng riêng biệt —
+Đầu vào của bước này là **danh sách dòng chữ** đã làm sạch (vd):
 
 ```
-Dòng nhãn :  "Họ và tên | Full name"   (trên CCCD '|' hay bị đọc thành 'I')
-Dòng giá trị: "NGUYEN VAN AN"           <-- giá trị thật nằm ở DÒNG DƯỚI
+['CAN CUOC CONG DAN',
+ 'So / No: 001099012345',
+ 'Ho va ten / Full name',
+ 'NGUYEN VAN AN',
+ 'Ngay sinh / Date of birth: 12/05/1990',
+ 'Noi thuong tru / Place of residence',
+ '15 Tran Hung Dao, Ha Noi']
 ```
 
-Lỗi nằm ở heuristic `_after_label`: nó chỉ lấy text **cùng dòng** với nhãn. Vì trên CCCD,
-nhãn "Họ và tên / Full name" đứng **một mình một dòng** (giá trị ở dòng kế dưới), phần
-"cùng dòng" sau nhãn tiếng Việt chỉ còn lại **nhãn tiếng Anh "Full name"** → bị lấy nhầm
-làm giá trị.
+Ta lấy mỗi trường bằng **một cách đơn giản**, chia làm 2 nhóm:
 
-**Cách sửa:**
-1. `_clean_value()` bỏ ký tự ngăn cách đầu/cuối (`/ | I : - .`) và nếu phần còn lại **chỉ
-   là nhãn tiếng Anh** ("full name", "place of origin"…) thì coi như **rỗng**.
-2. `_after_label(..., fallback_next=True)`: khi cùng dòng không có giá trị thật → **lấy dòng
-   kế tiếp**. Áp dụng cho **Họ và tên, Quê quán, Nơi thường trú** (các trường mà CCCD đặt
-   giá trị ở dòng dưới). Các trường cùng dòng (ngày sinh, giới tính, quốc tịch) giữ nguyên.
+**a) Lấy theo MẪU (pattern) — không cần nhãn**
+- **Số CCCD**: duyệt từng dòng, bỏ hết ký tự không phải số (`re.sub(r"\D", "", line)`);
+  dòng nào còn **đúng 9 chữ số (CMND cũ) hoặc 12 chữ số (CCCD)** thì lấy.
+- **Ngày sinh**: tìm **mẫu ngày `dd/mm/yyyy` đầu tiên** trong toàn bộ chữ (regex `_DATE_RE`),
+  rồi chuẩn hoá về dạng 2 chữ số ngày/tháng.
 
-Nhờ vậy cả 2 bố cục đều đúng: giá trị ở *dòng dưới* (CCCD thật) và giá trị *cùng dòng*
-(ảnh gộp), kể cả khi '|' bị OCR đọc thành 'I'.
+**b) Lấy theo NHÃN — dùng `value_below_label(lines, keywords)`**
+
+Mấu chốt bố cục CCCD: **dòng nhãn đứng riêng, GIÁ TRỊ nằm ở DÒNG NGAY DƯỚI**:
+
+```
+"Họ và tên / Full name"      ← dòng nhãn (song ngữ)
+"NGUYEN VAN AN"              ← giá trị thật nằm ở DÒNG DƯỚI
+```
+
+Hàm chỉ làm 3 việc, đọc là hiểu:
+1. Tìm dòng có **chứa nhãn** — so khớp **không dấu** (`strip_accents`) nên "Họ và tên",
+   "ho va ten", "HO VA TEN" đều khớp.
+2. Nếu dòng đó viết kiểu `"nhãn: giá trị"` (giá trị cùng dòng) → lấy phần **sau dấu ':'**.
+3. Nếu không → lấy luôn **dòng kế tiếp** làm giá trị.
+
+```python
+def value_below_label(lines, keywords):
+    for i, line in enumerate(lines):
+        if not any(kw in strip_accents(line) for kw in keywords):
+            continue
+        if ":" in line:                       # (2) giá trị cùng dòng
+            after = line.split(":", 1)[1].strip()
+            if after:
+                return after
+        if i + 1 < len(lines):                # (3) giá trị ở dòng kế tiếp
+            return lines[i + 1].strip()
+        return ""
+    return ""
+```
+
+Áp dụng: **Họ tên** ← nhãn `["ho va ten", "ho ten", "full name"]`; **Địa chỉ** ← nhãn
+`["noi thuong tru", "thuong tru", "place of residence", "dia chi", ...]`.
+
+> **Vì sao cách này đơn giản hơn bản trước & vẫn đúng?** Bản cũ cố lấy text *cùng dòng* với
+> nhãn rồi phải làm sạch nhiều (bỏ '/', '|', 'I', loại nhãn tiếng Anh "Full name"…) — rối và
+> dễ lấy nhầm chính nhãn tiếng Anh làm giá trị. Bản mới đi thẳng vào quy luật "giá trị nằm ở
+> **dòng dưới**", nên **không cần** mấy bước làm sạch đó nữa.
+>
+> Lưu ý: lỗi "ra Full name thay vì tên" là ở **bước (4) trích xuất**, KHÔNG phải tiền xử lý /
+> text detection / recognition — PaddleOCR đã tách đúng 2 dòng, chỉ là logic lấy sai dòng.
+
+> Đã **rút gọn còn 4 trường** (số CCCD, họ tên, ngày sinh, địa chỉ) — vừa đủ cho form đăng ký,
+> code gọn và dễ giải thích hơn. Các trường khác (giới tính, quốc tịch, quê quán) đã bỏ.
 
 ## Đăng ký khám & gợi ý khoa
 
@@ -115,5 +147,6 @@ python app.py
   nhập tay + đăng ký vẫn hoạt động** bình thường — luồng Hướng B vẫn demo được đầy đủ.
 
 ## Đã kiểm thử
-- Quét ảnh mẫu → trích xuất đúng: số CCCD, họ tên, ngày sinh, giới tính, quốc tịch, địa chỉ.
+- Quét ảnh mẫu → trích xuất đúng **4 trường**: số CCCD, họ tên, ngày sinh, địa chỉ
+  (đúng cả 3 bố cục: giá trị ở dòng dưới, biến thể '|'→'I', và giá trị cùng dòng).
 - `register` với *"tôi bị đau ngực, khó thở"* → **Khoa Tim mạch**, cấp số `A2-001`, kèm đường đi.

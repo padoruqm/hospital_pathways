@@ -95,10 +95,7 @@ export interface OcrFields {
   id_number: string
   full_name: string
   dob: string
-  sex: string
-  nationality: string
-  hometown: string
-  residence: string
+  address: string
 }
 
 export interface ScanResult {

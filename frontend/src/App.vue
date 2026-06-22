@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Khung ứng dụng: header cố định + vùng nội dung theo route + footer + nút chat nổi.
-import FloatingChatButton from '@/components/FloatingChatButton.vue'
+import FloatingChatButton from "@/components/FloatingChatButton.vue";
 </script>
 
 <template>
@@ -8,7 +8,7 @@ import FloatingChatButton from '@/components/FloatingChatButton.vue'
     <div class="container inner">
       <RouterLink to="/" class="brand">
         <span class="logo">🏥</span>
-        <span>Điều hướng bệnh viện</span>
+        <span>Bệnh viện đa khoa tỉnh</span>
       </RouterLink>
       <nav class="nav">
         <RouterLink to="/register" class="nav-link">Đăng ký khám</RouterLink>

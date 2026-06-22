@@ -5,8 +5,7 @@ Pipeline (đúng các bước đề yêu cầu), bản cơ bản, KHÔNG train m
   (1) TIỀN XỬ LÝ   : đọc ảnh, xoay theo EXIF, thu nhỏ nếu quá lớn, tăng tương phản.
   (2) MODEL (OCR)  : PaddleOCR (PP-OCRv*, tiếng Việt) đọc toàn bộ chữ trên ảnh.
   (3) HẬU XỬ LÝ    : làm sạch các dòng text (bỏ khoảng trắng thừa, dòng rỗng).
-  (4) TRÍCH XUẤT   : dùng heuristic/regex lấy các trường: số CCCD, họ tên, ngày sinh,
-                     giới tính, quốc tịch, quê quán, nơi thường trú.
+  (4) TRÍCH XUẤT   : dùng heuristic/regex lấy 4 trường: số CCCD, họ tên, ngày sinh, địa chỉ.
   (5) OUTPUT       : trả JSON các trường + danh sách dòng OCR thô (để đối chiếu).
 
       Ảnh CCCD ─►(1)tiền xử lý─►(2)PaddleOCR─► dòng text ─►(3)làm sạch─►(4)regex ─► JSON
@@ -114,113 +113,72 @@ def postprocess(lines: list[str]) -> list[str]:
 # ==========================================================================
 # (4) TRÍCH XUẤT THÔNG TIN — heuristic/regex cho các trường CCCD
 # ==========================================================================
+# Mẫu ngày dd/mm/yyyy (chấp nhận dấu ngăn cách / - .). Dùng cho ngày sinh.
 _DATE_RE = re.compile(r"\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\b")
 
 
-def _clean_value(text: str, english_terms: tuple[str, ...] = ()) -> str:
-    """Làm sạch phần giá trị: bỏ ký tự ngăn cách đầu/cuối ('/', '|', 'I', ':', '-', '.').
+def _value_below_label(lines: list[str], keywords: list[str]) -> str:
+    """Lấy GIÁ TRỊ của một trường có nhãn trên CCCD.
 
-    Trên CCCD nhãn là song ngữ, ví dụ "Họ và tên / Full name" — dấu gạch đứng '|' hay bị
-    OCR đọc nhầm thành 'I'. Nếu sau khi bỏ nhãn chỉ còn đúng phần tiếng Anh (vd "Full name")
-    thì coi như KHÔNG có giá trị (trả "") để bên ngoài lấy dòng kế tiếp.
+    Mấu chốt về bố cục CCCD: dòng NHÃN (vd "Họ và tên / Full name", "Nơi thường trú / ...")
+    đứng riêng một dòng, còn GIÁ TRỊ thật nằm ở DÒNG NGAY DƯỚI. Vì vậy hàm làm 3 việc:
+
+      1. Tìm dòng có chứa nhãn — so khớp KHÔNG DẤU (nhờ ``strip_accents``) nên "Họ và tên",
+         "ho va ten", "HO VA TEN" đều khớp.
+      2. Nếu dòng đó viết kiểu "nhãn: giá trị" (giá trị nằm cùng dòng) -> lấy phần sau ':'.
+      3. Nếu không có -> lấy luôn DÒNG KẾ TIẾP làm giá trị.
+
+    Cách này tránh được lỗi cũ (lấy nhầm phần nhãn tiếng Anh "Full name") mà vẫn rất gọn.
     """
-    t = re.sub(r"^[\s:|/.\-]+", "", text)         # bỏ ký tự ngăn cách ở đầu
-    t = re.sub(r"^I\s+", "", t)                    # bỏ 'I' đứng riêng (vốn là dấu '|')
-    t = t.strip(" :|/.-")
-    norm = strip_accents(t)
-    for term in english_terms:                     # chỉ còn nhãn tiếng Anh -> rỗng
-        if norm == term or norm.replace(" ", "") == term.replace(" ", ""):
-            return ""
-    return t
-
-
-def _after_label(
-    lines: list[str],
-    labels: list[str],
-    english_terms: tuple[str, ...] = (),
-    fallback_next: bool = False,
-) -> str:
-    """Tìm dòng chứa nhãn (so khớp không dấu) và trả GIÁ TRỊ của trường đó.
-
-    - Mặc định lấy phần text nằm cùng dòng, sau dấu ':' (hoặc sau nhãn).
-    - ``fallback_next=True``: nếu cùng dòng KHÔNG có giá trị thật (chỉ có nhãn song ngữ),
-      lấy **dòng kế tiếp** — đúng bố cục CCCD với "Họ và tên", "Quê quán", "Nơi thường trú"
-      (giá trị thật nằm ở DÒNG DƯỚI nhãn).
-    """
-    for i, ln in enumerate(lines):
-        norm = strip_accents(ln)
-        for label in labels:
-            pos = norm.find(label)
-            if pos == -1:
-                continue
-            rest = ln[pos + len(label):]
-            if ":" in rest:
-                rest = rest.split(":", 1)[1]
-            value = _clean_value(rest, english_terms)
-            if value:
-                return value
-            if fallback_next and i + 1 < len(lines):
-                return _clean_value(lines[i + 1], english_terms)
-            return ""
+    for i, line in enumerate(lines):
+        line_no_accent = strip_accents(line)
+        if not any(kw in line_no_accent for kw in keywords):
+            continue
+        if ":" in line:                          # (2) giá trị cùng dòng, sau dấu ':'
+            after = line.split(":", 1)[1].strip()
+            if after:
+                return after
+        if i + 1 < len(lines):                   # (3) giá trị ở dòng kế tiếp
+            return lines[i + 1].strip()
+        return ""
     return ""
 
 
 def extract_fields(lines: list[str]) -> dict:
-    """Lấy các trường chính từ các dòng OCR (bản heuristic, đủ dùng để demo)."""
-    full_text = "\n".join(lines)
+    """Lấy 4 trường cần cho đăng ký khám: số CCCD, họ tên, ngày sinh, địa chỉ.
 
-    # Số CCCD: dòng nào gồm toàn chữ số sau khi bỏ ký tự khác, dài 9 hoặc 12.
+    Mỗi trường một cách lấy đơn giản, dễ giải thích:
+      - Số CCCD  : dòng nào (sau khi bỏ ký tự không phải số) còn đúng 9 hoặc 12 chữ số.
+      - Ngày sinh: mẫu ngày dd/mm/yyyy đầu tiên trong toàn bộ chữ đọc được.
+      - Họ tên   : giá trị nằm dưới nhãn "Họ và tên / Full name".
+      - Địa chỉ  : giá trị nằm dưới nhãn "Nơi thường trú / Place of residence".
+    """
+    # Số CCCD: CMND cũ 9 số, CCCD 12 số.
     id_number = ""
-    for ln in lines:
-        digits = re.sub(r"\D", "", ln)
+    for line in lines:
+        digits = re.sub(r"\D", "", line)         # bỏ mọi ký tự không phải chữ số
         if len(digits) in (9, 12):
             id_number = digits
             break
 
-    # Ngày sinh: mẫu dd/mm/yyyy đầu tiên trong toàn văn bản.
+    # Ngày sinh: tìm mẫu ngày đầu tiên trong toàn văn bản.
     dob = ""
-    m = _DATE_RE.search(full_text)
-    if m:
-        dob = f"{int(m.group(1)):02d}/{int(m.group(2)):02d}/{m.group(3)}"
+    match = _DATE_RE.search("\n".join(lines))
+    if match:
+        day, month, year = match.groups()
+        dob = f"{int(day):02d}/{int(month):02d}/{year}"
 
-    # Họ tên: trên CCCD giá trị nằm ở DÒNG DƯỚI nhãn "Họ và tên / Full name".
-    full_name = _after_label(
-        lines, ["ho va ten", "ho ten", "full name"],
-        english_terms=("full name",), fallback_next=True,
-    )
-
-    # Giới tính: lấy đoạn ngay sau nhãn "Giới tính/Sex" để tránh dính "VIỆT NAM".
-    sex = ""
-    sex_seg = _after_label(lines, ["gioi tinh", "sex"])
-    seg_norm = strip_accents(sex_seg)
-    if seg_norm.startswith("nu") or " nu" in f" {seg_norm}":
-        sex = "Nữ"
-    elif "nam" in seg_norm or "male" in seg_norm:
-        sex = "Nam"
-
-    nationality = _after_label(lines, ["quoc tich", "nationality"])
-    # Nếu quốc tịch dính chung dòng với giới tính, cắt lại cho gọn.
-    nationality = re.split(r"\s{2,}", nationality)[0].strip()
-
-    # Quê quán: giá trị cũng nằm ở DÒNG DƯỚI nhãn "Quê quán / Place of origin".
-    hometown = _after_label(
-        lines, ["que quan", "place of origin"],
-        english_terms=("place of origin",), fallback_next=True,
-    )
-    # Nơi thường trú: tương tự, giá trị ở dòng dưới (đôi khi 2 dòng — lấy dòng đầu).
-    residence = _after_label(
-        lines, ["noi thuong tru", "thuong tru", "noi cu tru", "place of residence", "residence"],
-        english_terms=("place of residence", "residence"), fallback_next=True,
+    # Họ tên & Địa chỉ: giá trị nằm ở dòng dưới nhãn (xem _value_below_label).
+    full_name = _value_below_label(lines, ["ho va ten", "ho ten", "full name"])
+    address = _value_below_label(
+        lines, ["noi thuong tru", "thuong tru", "noi cu tru", "place of residence", "dia chi"]
     )
 
     return {
         "id_number": id_number,
         "full_name": full_name,
         "dob": dob,
-        "sex": sex,
-        "nationality": nationality,
-        "hometown": hometown,
-        "residence": residence,
+        "address": address,
     }
 
 

@@ -14,10 +14,7 @@ const FIELD_LABELS: Record<string, string> = {
   id_number: 'Số CCCD',
   full_name: 'Họ và tên',
   dob: 'Ngày sinh',
-  sex: 'Giới tính',
-  nationality: 'Quốc tịch',
-  hometown: 'Quê quán',
-  residence: 'Nơi thường trú',
+  address: 'Địa chỉ',
 }
 
 function onFileChange(e: Event) {
