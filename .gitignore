@@ -34,6 +34,8 @@ dist-ssr/
 
 # ---- File thử nghiệm cá nhân (không commit) ----
 backend/testmodel.py
+# Ảnh CCCD thật dùng để test cục bộ — KHÔNG đẩy lên repo (riêng tư)
+demo/
 
 # ---- Build / logs ----
 *.log
