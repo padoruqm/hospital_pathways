@@ -64,11 +64,8 @@ def _get_engine():
 # ==========================================================================
 # (1) TIỀN XỬ LÝ — chuẩn hoá ảnh trước khi đưa vào OCR
 # ==========================================================================
-def preprocess(image_bytes: bytes) -> str:
-    """Mở ảnh, xoay đúng chiều (EXIF), thu nhỏ nếu quá lớn, tăng tương phản.
-
-    Trả về đường dẫn file PNG tạm để PaddleOCR đọc (đường dẫn ổn định hơn ndarray).
-    """
+def preprocess_pil(image_bytes: bytes):
+    """Trả về ảnh PIL đã tiền xử lý (để tái dùng cho cả OCR lẫn trang debug)."""
     from PIL import Image, ImageOps
 
     img = Image.open(io.BytesIO(image_bytes))
@@ -82,10 +79,24 @@ def preprocess(image_bytes: bytes) -> str:
         img = img.resize((int(img.width * scale), int(img.height * scale)))
 
     img = ImageOps.autocontrast(img)        # kéo giãn tương phản cho chữ rõ hơn
+    return img
 
+
+def preprocess(image_bytes: bytes) -> str:
+    """Tiền xử lý rồi lưu ra file PNG tạm để PaddleOCR đọc, trả về đường dẫn."""
+    img = preprocess_pil(image_bytes)
     tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
     img.save(tmp.name)
     return tmp.name
+
+
+def _to_data_url(pil_img) -> str:
+    """Mã hoá ảnh PIL thành data URL base64 để trả thẳng cho frontend hiển thị."""
+    import base64
+
+    buf = io.BytesIO()
+    pil_img.save(buf, "PNG")
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
 # ==========================================================================
@@ -199,6 +210,82 @@ def scan():
     lines = postprocess(raw)                        # (3) làm sạch
     fields = extract_fields(lines)                  # (4) trích xuất
     return jsonify({"status": "success", "fields": fields, "raw_lines": lines})
+
+
+def _poly_to_points(poly) -> list[list[int]]:
+    """Đưa 1 vùng (polygon 4 điểm, hoặc box [x1,y1,x2,y2]) về danh sách điểm [[x,y],...]."""
+    pts = list(poly)
+    if len(pts) == 4 and all(not hasattr(p, "__len__") for p in pts):
+        x1, y1, x2, y2 = (int(v) for v in pts)  # box dạng [x1,y1,x2,y2]
+        return [[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
+    return [[int(p[0]), int(p[1])] for p in pts]  # polygon 4 điểm
+
+
+@ocr_bp.route("/debug", methods=["POST"])
+def debug():
+    """Trả về TỪNG BƯỚC của pipeline để xem trực quan trên UI:
+
+    - preprocessed_image : ảnh sau tiền xử lý (data URL)
+    - annotated_image    : ảnh có vẽ bounding box + số thứ tự từng vùng chữ
+    - boxes              : [{index, text, score, box}] — kết quả model (chưa làm sạch)
+    - raw_lines          : các dòng chữ thô từ model
+    - cleaned_lines      : sau hậu xử lý
+    - fields             : sau trích xuất
+    """
+    file = request.files.get("image")
+    if file is None or not file.filename:
+        return jsonify({"error": "Chưa có ảnh. Gửi file ở trường 'image'."}), 400
+
+    engine = _get_engine()
+    if engine is None:
+        return jsonify({"status": "error", "message": _engine_error}), 503
+
+    from PIL import ImageDraw
+
+    # (1) Tiền xử lý — giữ lại ảnh PIL để vừa OCR vừa vẽ minh hoạ.
+    pre_img = preprocess_pil(file.read())
+    tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+    pre_img.save(tmp.name)
+    try:
+        result = engine.predict(tmp.name)           # (2) chạy OCR
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Lỗi OCR: {e}"}), 500
+    finally:
+        try:
+            os.remove(tmp.name)
+        except OSError:
+            pass
+
+    res = result[0] if result else {}
+    texts = list(res.get("rec_texts", []))
+    scores = list(res.get("rec_scores", []))
+    polys = list(res.get("rec_polys", [])) or list(res.get("rec_boxes", []))
+
+    # Vẽ bounding box + số thứ tự lên bản sao ảnh tiền xử lý.
+    annotated = pre_img.copy()
+    draw = ImageDraw.Draw(annotated)
+    boxes = []
+    for i, text in enumerate(texts):
+        score = float(scores[i]) if i < len(scores) else 0.0
+        pts = _poly_to_points(polys[i]) if i < len(polys) else []
+        if pts:
+            draw.line([tuple(p) for p in pts] + [tuple(pts[0])], fill=(2, 132, 199), width=3)
+            draw.text((pts[0][0], max(0, pts[0][1] - 12)), str(i + 1), fill=(220, 38, 38))
+        boxes.append({"index": i + 1, "text": text, "score": round(score, 3), "box": pts})
+
+    # (3) hậu xử lý + (4) trích xuất
+    cleaned = postprocess(texts)
+    fields = extract_fields(cleaned)
+
+    return jsonify({
+        "status": "success",
+        "preprocessed_image": _to_data_url(pre_img),
+        "annotated_image": _to_data_url(annotated),
+        "boxes": boxes,
+        "raw_lines": texts,
+        "cleaned_lines": cleaned,
+        "fields": fields,
+    })
 
 
 # ==========================================================================

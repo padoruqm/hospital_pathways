@@ -91,6 +91,7 @@ function reset() {
     <header class="reg-head">
       <h1>Đăng ký khám</h1>
       <p>Quét CCCD để tự điền thông tin, hoặc nhập tay. Hệ thống sẽ gợi ý khoa và cấp số thứ tự.</p>
+      <RouterLink to="/ocr-debug" class="dbg-link">🔬 Xem các bước xử lý OCR</RouterLink>
     </header>
 
     <!-- KẾT QUẢ -->
@@ -164,7 +165,13 @@ function reset() {
 .reg-head p {
   color: var(--color-muted);
   font-size: 0.9rem;
-  margin: 0 0 16px;
+  margin: 0 0 8px;
+}
+.dbg-link {
+  display: inline-block;
+  color: var(--color-primary-dark);
+  font-size: 0.85rem;
+  margin-bottom: 14px;
 }
 .step {
   padding: 16px;

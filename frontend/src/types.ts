@@ -107,6 +107,25 @@ export interface ScanResult {
   raw_lines: string[]
 }
 
+/** Một vùng chữ model nhận diện (để vẽ/đối chiếu ở trang debug). */
+export interface OcrBox {
+  index: number
+  text: string
+  score: number
+  box: number[][]
+}
+
+/** Kết quả debug pipeline OCR — ảnh + kết quả từng bước. */
+export interface OcrDebugResult {
+  status: string
+  preprocessed_image: string
+  annotated_image: string
+  boxes: OcrBox[]
+  raw_lines: string[]
+  cleaned_lines: string[]
+  fields: OcrFields
+}
+
 export interface RegisterResult {
   status: string
   queue_number: string

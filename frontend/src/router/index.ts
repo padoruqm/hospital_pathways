@@ -29,6 +29,12 @@ const router = createRouter({
       component: () => import('@/views/RegisterView.vue'),
     },
     {
+      // Trang debug: xem trực quan từng bước của pipeline OCR.
+      path: '/ocr-debug',
+      name: 'ocr-debug',
+      component: () => import('@/views/OcrDebugView.vue'),
+    },
+    {
       // Trang quản trị: thêm/sửa/xoá khoa phòng + thống kê lượt tra cứu.
       path: '/admin',
       name: 'admin',

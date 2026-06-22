@@ -21,6 +21,7 @@ Không chứa logic dữ liệu/tìm kiếm (nằm ở ``repository.py``).
     GET    /api/ai/rag/status       -> tình trạng index RAG
     OCR CCCD (Hướng B, xem ocr.py):
     POST   /api/ocr/scan            -> quét ảnh CCCD trích xuất thông tin
+    POST   /api/ocr/debug           -> xem từng bước pipeline OCR (ảnh + box)
     POST   /api/ocr/register        -> đăng ký khám: gợi ý khoa + số thứ tự ảo
 
 """

@@ -53,6 +53,21 @@ Cho bệnh nhân **chụp/tải ảnh CCCD** → hệ thống OCR tự đọc th
 3. Bấm *Đăng ký & lấy số thứ tự* → màn hình xác nhận: **số thứ tự** lớn, khoa gợi ý, đường
    đi, nút **"Xem sơ đồ & đường đi"** sang trang chi tiết khoa.
 
+## Trang "OCR Debug" — xem trực quan từng bước
+
+Để kiểm thử và giải thích pipeline, có thêm endpoint `POST /api/ocr/debug` và trang
+[`/ocr-debug`](../frontend/src/views/OcrDebugView.vue) (link "🔬 Xem các bước xử lý OCR"
+trên trang đăng ký). Tải 1 ảnh CCCD, trang hiển thị lần lượt:
+
+1. **Tiền xử lý** — ảnh sau khi xoay/thu nhỏ/tăng tương phản (`preprocessed_image`).
+2. **Model** — ảnh có **vẽ bounding box + số thứ tự** từng vùng chữ (`annotated_image`),
+   kèm bảng *chữ nhận diện + độ tin cậy* của từng box.
+3. **Hậu xử lý** — so sánh dòng **thô** ↔ dòng **đã làm sạch**.
+4. **Trích xuất** — bảng các trường lấy được.
+
+Endpoint trả ảnh dưới dạng **data URL base64** nên frontend chỉ việc gán vào `<img :src>`,
+không cần lưu file. Đây là công cụ debug, không nằm trong luồng đăng ký chính.
+
 ## Cài đặt & lưu ý môi trường ⚠️
 
 PaddlePaddle **chưa có bản cho Python 3.14**. Để chạy OCR, dùng **Python 3.13**:

@@ -8,6 +8,7 @@ import type {
   DepartmentInput,
   DepartmentSummary,
   FloorGroup,
+  OcrDebugResult,
   OcrFields,
   RegisterResult,
   ScanResult,
@@ -123,4 +124,22 @@ export function registerVisit(payload: Partial<OcrFields> & { reason: string }):
     method: 'POST',
     body: JSON.stringify(payload),
   })
+}
+
+// Trang debug: trả về từng bước của pipeline OCR (ảnh + box + dòng + trường).
+export async function debugOCR(file: File): Promise<OcrDebugResult> {
+  const form = new FormData()
+  form.append('image', file)
+  const res = await fetch(`${BASE}/ocr/debug`, { method: 'POST', body: form })
+  if (!res.ok) {
+    let message = `Lỗi ${res.status}`
+    try {
+      const body = await res.json()
+      message = body?.message || body?.error || message
+    } catch {
+      /* dùng message mặc định */
+    }
+    throw new Error(message)
+  }
+  return res.json() as Promise<OcrDebugResult>
 }
