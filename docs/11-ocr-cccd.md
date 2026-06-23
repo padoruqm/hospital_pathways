@@ -114,20 +114,12 @@ def value_below_label(lines, keywords):
 3. Bấm *Đăng ký & lấy số thứ tự* → màn hình xác nhận: **số thứ tự** lớn, khoa gợi ý, đường
    đi, nút **"Xem sơ đồ & đường đi"** sang trang chi tiết khoa.
 
-## Trang "OCR Debug" — xem trực quan từng bước
+## Thử từng bước pipeline — notebook Colab
 
-Để kiểm thử và giải thích pipeline, có thêm endpoint `POST /api/ocr/debug` và trang
-[`/ocr-debug`](../frontend/src/views/OcrDebugView.vue) (link "🔬 Xem các bước xử lý OCR"
-trên trang đăng ký). Tải 1 ảnh CCCD, trang hiển thị lần lượt:
-
-1. **Tiền xử lý** — ảnh sau khi xoay/thu nhỏ/tăng tương phản (`preprocessed_image`).
-2. **Model** — ảnh có **vẽ bounding box + số thứ tự** từng vùng chữ (`annotated_image`),
-   kèm bảng *chữ nhận diện + độ tin cậy* của từng box.
-3. **Hậu xử lý** — so sánh dòng **thô** ↔ dòng **đã làm sạch**.
-4. **Trích xuất** — bảng các trường lấy được.
-
-Endpoint trả ảnh dưới dạng **data URL base64** nên frontend chỉ việc gán vào `<img :src>`,
-không cần lưu file. Đây là công cụ debug, không nằm trong luồng đăng ký chính.
+Để xem trực quan từng bước (tiền xử lý → bounding box → hậu xử lý → trích xuất), dùng
+notebook [`backend/ocr_pipeline_colab.ipynb`](../backend/ocr_pipeline_colab.ipynb): tải lên
+Google Colab, chạy lần lượt các cell, mỗi bước hiển thị ảnh/kết quả tương ứng. Notebook
+độc lập với web nên không cần chạy backend.
 
 ## Cài đặt & lưu ý môi trường ⚠️
 

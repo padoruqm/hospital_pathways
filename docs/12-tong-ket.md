@@ -9,17 +9,6 @@ và hướng cải thiện. Đây là tài liệu "đọc cuối" để nắm to
 nhận hướng dẫn đường đi, và đăng ký khám nhanh. Tech: **Vue 3 + TS** (frontend),
 **Flask** (backend), **Google Gemini** + **PaddleOCR** (AI).
 
-Dự án làm **cả hai hướng AI** của đề + một phần điểm cộng:
-
-| Hạng mục (theo đề) | Trạng thái |
-|--------------------|-----------|
-| Phần 1 — Web nền tảng (tìm kiếm, kết quả, sơ đồ tầng, chỉ đường, mobile) | ✅ Xong |
-| Phần 2 — Hướng A: Chatbot hỏi đáp (Gemini) — *System Instruction* **và** *RAG* | ✅ Xong |
-| Phần 2 — Hướng B: OCR quét CCCD đăng ký khám (PaddleOCR) | ✅ Xong |
-| Điểm cộng — Admin dashboard (CRUD + thống kê) | ✅ Xong |
-| Điểm cộng — Kết hợp 2 hướng AI trong cùng web | ✅ Xong (chatbot + OCR liên thông trang chi tiết) |
-| Điểm cộng — Tối ưu đường đi (đồ thị Dijkstra/A\*) | ❌ Không làm |
-
 ## 2. Các tính năng & nơi xem tài liệu
 
 | Tính năng | Trang | Tài liệu |
@@ -30,7 +19,7 @@ Dự án làm **cả hai hướng AI** của đề + một phần điểm cộng
 | Chatbot (System Instruction) | `/chat` (nút "Hỏi nhanh") | [09](09-ai-chatbot-gemini.md) |
 | Chatbot RAG (truy hồi tài liệu + nguồn) | `/chat` (nút "RAG") | [10](10-rag-chatbot.md) |
 | OCR CCCD + đăng ký khám | `/register` | [11](11-ocr-cccd.md) |
-| OCR debug (xem từng bước) | `/ocr-debug` | [11](11-ocr-cccd.md) |
+| Thử từng bước OCR (notebook) | `backend/ocr_pipeline_colab.ipynb` | [11](11-ocr-cccd.md) |
 
 ## 3. Kiến trúc & pipeline
 
@@ -64,16 +53,18 @@ Câu hỏi ─► embedding ─► tìm top-K cosine ─► ghép ngữ cảnh +
 ## 4. Các phần CHƯA ỔN (cần lưu ý / sửa trước khi nộp)
 
 1. **Model Gemini mặc định không tồn tại.** `ai.py` và `ai_rag.py` đang đặt mặc định
-   `GEMINI_MODEL = "gemini-3.1-flash-lite"` — **model này không có thật** nên sẽ lỗi 404 nếu
-   không đặt biến môi trường. **Nên sửa** về model có thật, ví dụ `gemini-2.0-flash`
-   (hoặc đặt `GEMINI_MODEL=gemini-2.0-flash` trong `backend/.env`).
+   `GEMINI_MODEL = "gemini-3.1-flash-lite"` 
+
 2. **Khoá Gemini hiện tại hết quota / không có quyền model mới** (`limit: 0`) — embedding chạy
    được nhưng bước sinh câu trả lời báo 429/403. Cần API key có hạn mức để demo chatbot trả lời.
+
 3. **OCR phụ thuộc Python ≤ 3.13.** PaddlePaddle chưa có bản cho Python 3.14; phải tạo venv
    bằng `python3.13` + `pip install -r requirements-ocr.txt`. Nếu chạy Python 3.14, phần quét
    ảnh báo lỗi (nhập tay vẫn được).
+
 4. **Dữ liệu chỉ nằm trong bộ nhớ.** Thêm/sửa/xoá khoa (admin), số thứ tự, lượt xem… **reset
    khi khởi động lại** server. Đủ cho demo, nhưng không bền.
+   
 5. **Tìm kiếm "cứng" theo chuỗi con.** Truy vấn rất ngắn ("nhi") có thể khớp hơi rộng; câu
    dài chỉ map tốt nhờ chatbot/keyword-overlap, không phải bản tìm kiếm chính.
 6. **Trích xuất OCR là heuristic.** Đúng với bố cục CCCD chuẩn; ảnh mờ/nghiêng/bố cục lạ có

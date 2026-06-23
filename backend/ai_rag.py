@@ -60,12 +60,7 @@ def _friendly_error(raw: str) -> str:
     return raw
 
 
-# ==========================================================================
 # (1) TÀI LIỆU — sinh file kiến thức từ dữ liệu gốc
-# --------------------------------------------------------------------------
-# "Nguồn sự thật" vẫn là hospital_data. Ta XUẤT nó ra một tài liệu markdown để RAG
-# coi đó là kho kiến thức. Tách document khỏi code giúp dễ thay tài liệu thật sau này.
-# ==========================================================================
 def build_document() -> str:
     """Tạo nội dung tài liệu markdown đầy đủ từ toàn bộ dữ liệu khoa/phòng."""
     parts: list[str] = ["# Cẩm nang khoa/phòng bệnh viện\n"]
@@ -144,7 +139,7 @@ def _chunk_id(chunk: str) -> str:
             return line.split(":", 1)[1].strip()
     return ""
 
-
+    
 # ==========================================================================
 # (3) EMBEDDING — biến văn bản thành vector số
 # --------------------------------------------------------------------------

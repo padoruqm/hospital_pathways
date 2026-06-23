@@ -7,6 +7,10 @@ venv/
 env/
 .pytest_cache/
 instance/
+# File CSDL cục bộ (H2/SQLite…), không commit
+backend/data/
+*.mv.db
+*.sqlite3
 
 # ---- Node / Vue (frontend) ----
 node_modules/
