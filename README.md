@@ -6,7 +6,7 @@ bằng AI; quét CCCD để điền form đăng ký. Tích hợp **AI cả hai h
 và OCR CCCD (Hướng B).
 
 - **Repository:** https://github.com/padoruqm/hospital_pathways
-- **Video demo:** _(sẽ cập nhật link YouTube/Drive)_
+- **Video demo:** https://www.youtube.com/watch?v=_teejyVpUlo&t=1270s
 
 ---
 
@@ -26,7 +26,7 @@ Dữ liệu bệnh viện được **mock 20 khoa/phòng** (2 toà nhà, 4 tần
 
 ## 2. Hướng AI đã chọn & lý do
 
-Đề cho chọn **một** trong hai hướng; dự án này làm **cả hai** để nhắm điểm cộng *"Kết hợp
+Đề cho chọn **một** trong hai hướng; dự án này làm **cả hai**: *"Kết hợp
 cả hai hướng AI"* và để AI bao trùm trọn luồng bệnh nhân:
 
 - **Hướng A — Chatbot hỏi đáp (RAG):** phù hợp bệnh nhân **chưa biết nên khám khoa nào**,
@@ -95,11 +95,11 @@ Cần **2 terminal**: một cho backend, một cho frontend.
 ### 4.1 Backend (Flask) — cổng 5057
 ```bash
 cd backend
-python3.13 -m venv .venv            # nên dùng Python 3.13 (xem lưu ý OCR)
+python3.13 -m venv .venv            # nên dùng Python 3.13
 source .venv/bin/activate           # Windows: .venv\Scripts\activate
 pip install -r requirements.txt     # lõi: Flask, google-genai…
 pip install -r requirements-ocr.txt # (tuỳ chọn) bật OCR CCCD — PaddleOCR
-cp .env.example .env                # rồi mở .env điền cấu hình (mục 4.3)
+cp .env.example .env                # rồi mở .env điền cấu hình
 python app.py                       # http://localhost:5057
 ```
 
@@ -179,6 +179,3 @@ Mở **http://localhost:5173**. Vite tự proxy `/api` sang backend, không cầ
 - **RAG mạnh hơn:** thay vector store in-memory bằng **FAISS/Chroma**, lưu embedding ra đĩa.
 
 ---
-
-> Tài liệu giải thích chi tiết **từng bước build** nằm trong thư mục `docs/` (chỉ để đọc ở
-> local). Notebook thử từng bước OCR: `backend/ocr_pipeline_colab.ipynb`.
