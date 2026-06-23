@@ -117,7 +117,7 @@ Mở **http://localhost:5173**. Vite tự proxy `/api` sang backend, không cầ
 |------|---------|----------|
 | `PORT` | Cổng Flask (tránh AirPlay chiếm 5000 trên macOS) | `5057` |
 | `GEMINI_API_KEY` | Khoá Gemini (chatbot + embedding RAG). Lấy ở Google AI Studio (key chuẩn bắt đầu `AIza`) | _(trống)_ |
-| `GEMINI_MODEL` | Model sinh câu trả lời — **đặt model có thật**, ví dụ `gemini-2.0-flash` | `gemini-2.0-flash` |
+| `GEMINI_MODEL` | Model sinh câu trả lời của chatbot | `gemini-3.1-flash-lite` |
 | `GEMINI_EMBED_MODEL` | Model embedding cho RAG | `gemini-embedding-001` |
 | `RAG_TOP_K` | Số đoạn truy hồi mỗi câu hỏi | `4` |
 | `OCR_LANG` | Ngôn ngữ PaddleOCR | `vi` |
@@ -158,15 +158,9 @@ Mở **http://localhost:5173**. Vite tự proxy `/api` sang backend, không cầ
    "đầu" đều thành "dau"). → **Sửa:** chuẩn hoá rồi **khớp nguyên cụm (chuỗi con)**, khớp ở
    tên xếp trước → mỗi triệu chứng ra đúng khoa.
 2. **Khoá/Model Gemini.** Gặp `404` (tên model không tồn tại) và `403/429 limit:0` (project
-   không có quyền model mới / hết quota free). → **Sửa:** cho chọn model qua `GEMINI_MODEL`,
-   mặc định `gemini-2.0-flash`; **dịch lỗi sang tiếng Việt** thân thiện; thiếu khoá thì báo
-   rõ thay vì sập.
-3. **PaddlePaddle không cài được trên Python 3.14.** → **Sửa:** tách `requirements-ocr.txt`,
-   khuyến nghị **Python 3.13**, **import lười + fallback** (thiếu thư viện vẫn nhập tay đăng
-   ký được).
-4. **Lỗi oneDNN của PaddleOCR trên CPU Colab** (`NotImplementedError ... onednn_instruction`).
-   → **Sửa:** tắt oneDNN (`FLAGS_use_mkldnn=0` + `enable_mkldnn=False`) trong notebook.
-5. **OCR lấy nhầm nhãn tiếng Anh.** Trên CCCD, nhãn "Họ và tên / Full name" đứng một dòng,
+   không có quyền model / hết quota free). → **Sửa:** cho chọn model qua `GEMINI_MODEL`;
+   **dịch lỗi sang tiếng Việt** thân thiện; thiếu khoá thì báo rõ thay vì sập.
+3. **OCR lấy nhầm nhãn tiếng Anh.** Trên CCCD, nhãn "Họ và tên / Full name" đứng một dòng,
    **giá trị ở dòng dưới** → ban đầu trả về "Full name". → **Sửa:** hàm `value_below_label`
    lấy **dòng kế tiếp** (hoặc phần sau ':' nếu cùng dòng); rút gọn còn 4 trường cho dễ hiểu.
 
@@ -183,7 +177,6 @@ Mở **http://localhost:5173**. Vite tự proxy `/api` sang backend, không cầ
   cấu trúc CCCD ở bước hậu xử lý**; sẽ tinh chỉnh **tiền xử lý ảnh, Text Detection, Text
   Recognition** phù hợp loại ảnh (căn chỉnh/cắt vùng, nâng chất lượng ảnh).
 - **RAG mạnh hơn:** thay vector store in-memory bằng **FAISS/Chroma**, lưu embedding ra đĩa.
-- **Triển khai:** gunicorn, build frontend tĩnh, rate-limit API AI, thêm test + CI.
 
 ---
 
