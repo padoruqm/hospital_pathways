@@ -1,9 +1,6 @@
-"""Chatbot tư vấn khoa khám bằng Google Gemini (bản đơn giản, CHƯA dùng RAG).
-
+"""
 Ý tưởng: nhồi toàn bộ danh sách khoa/phòng vào **System Instruction** rồi để model tự
-tư vấn dựa trên đó. Cách này đủ tốt khi dữ liệu còn nhỏ (20 khoa). Khi dữ liệu lớn lên,
-ta sẽ thay bằng RAG (chỉ lấy vài khoa liên quan trước khi hỏi model) ở bước sau.
-
+tư vấn dựa trên đó. 
 Endpoint: POST /api/ai/chat   body { "message": str, "history": [{role, text}]? }
           -> { "status": "success", "reply": str }
 """
@@ -26,17 +23,15 @@ MODEL = os.environ.get(
                         )
 
 def _friendly_error(raw: str) -> str:
-    """Dịch lỗi thô từ Gemini sang thông báo tiếng Việt dễ hiểu + gợi ý khắc phục."""
     if "PERMISSION_DENIED" in raw or "403" in raw:
         return (
             f"Khoá Gemini không có quyền dùng model '{MODEL}'. Hãy thử đặt "
-            "GEMINI_MODEL=gemini-2.0-flash trong backend/.env, hoặc tạo API key mới "
+            "GEMINI_MODEL=gemini-3.1-flash-lite trong backend/.env, hoặc tạo API key mới "
             "(chuẩn bắt đầu bằng 'AIza') tại Google AI Studio."
         )
     if "RESOURCE_EXHAUSTED" in raw or "429" in raw:
         return (
-            "Đã hết hạn mức (quota) miễn phí của khoá Gemini. Vui lòng đợi quota reset, "
-            "dùng khoá khác, hoặc bật billing cho project."
+            "Đã hết hạn mức (quota) miễn phí của khoá Gemini. Vui lòng đợi quota reset."
         )
     return raw
 
@@ -67,7 +62,6 @@ def _system_instruction() -> str:
     )
 
 # Tạo client một lần, chỉ khi có API key. Nhờ vậy server vẫn chạy bình thường khi chưa
-# cấu hình khoá (các tính năng khác không bị ảnh hưởng), chỉ riêng /chat báo lỗi rõ ràng.
 _client = None
 
 def _get_client():
@@ -98,7 +92,7 @@ def chat_with_gemini():
 
     from google.genai import types
 
-    # Ghép lịch sử hội thoại (frontend giữ) để chatbot trả lời có ngữ cảnh, hỏi tiếp được.
+    # Ghép lịch sử hội thoại vào câu promt
     contents = []
     for turn in data.get("history", []):
         role = "model" if turn.get("role") == "assistant" else "user"
@@ -117,5 +111,5 @@ def chat_with_gemini():
             ),
         )
         return jsonify({"status": "success", "reply": response.text})
-    except Exception as e:  # lỗi mạng/khoá/quota… trả về cho frontend hiển thị
+    except Exception as e:
         return jsonify({"status": "error", "message": _friendly_error(str(e))}), 502

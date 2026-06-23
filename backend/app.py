@@ -1,7 +1,6 @@
-"""Flask API cho Hospital Wayfinding System — tầng web (HTTP).
-
-File này CHỈ lo việc nhận request, gọi ``repository`` để xử lý dữ liệu, rồi trả JSON.
-Không chứa logic dữ liệu/tìm kiếm (nằm ở ``repository.py``).
+"""
+File chỉ nhận lo việc nhận request, gọi ``repository`` để xử lý dữ liệu, rồi trả JSON.
+Không chứa logic dữ liệu or tìm kiếm (nằm ở ``repository.py``).
 
     Đọc:
     GET    /api/health              -> kiểm tra service sống
@@ -35,7 +34,6 @@ from ai_rag import ai_rag_bp
 from ocr import ocr_bp
 
 def _summary(dep: dict) -> dict:
-    """Bản rút gọn của một khoa để hiển thị trong danh sách / kết quả tìm kiếm."""
     return {
         "id": dep["id"],
         "name": dep["name"],
@@ -49,7 +47,6 @@ def _summary(dep: dict) -> dict:
     }
 
 def _detail(dep: dict) -> dict:
-    """Bản đầy đủ kèm hướng dẫn đường đi và toạ độ trên sơ đồ tầng."""
     return {
         **_summary(dep),
         "keywords": dep["keywords"],
@@ -60,15 +57,14 @@ def _detail(dep: dict) -> dict:
 
 def create_app() -> Flask:
     app = Flask(__name__)
-    # Cho phép frontend (Vite dev server) gọi API trong môi trường dev.
     CORS(app)
 
-    # Đăng ký blueprint
-    # Nhóm route AI (chatbot Gemini) dưới tiền tố /api/ai -> POST /api/ai/chat
+    # blueprint
+    # Nhóm route AI có tiền tố /api/ai -> POST /api/ai/chat
     app.register_blueprint(ai_bp, url_prefix="/api/ai")
-    # Chatbot RAG (tra tài liệu) -> POST /api/ai/rag/chat, GET /api/ai/rag/status
+    # Chatbot RAG -> POST /api/ai/rag/chat, GET /api/ai/rag/status
     app.register_blueprint(ai_rag_bp, url_prefix="/api/ai/rag")
-    # OCR quét CCCD (Hướng B) -> POST /api/ocr/scan, POST /api/ocr/register
+    # OCR quét CCCD -> POST /api/ocr/scan, POST /api/ocr/register
     app.register_blueprint(ocr_bp, url_prefix="/api/ocr")
 
     @app.get("/api/health")
@@ -161,7 +157,5 @@ app = create_app()
 if __name__ == "__main__":
     import os
 
-    # Cổng đọc từ biến môi trường PORT (mặc định 5057 để tránh đụng AirPlay
-    # Receiver chiếm cổng 5000 trên macOS). Production sẽ dùng gunicorn/uwsgi.
     port = int(os.environ.get("PORT", "5057"))
     app.run(host="0.0.0.0", port=port, debug=True)

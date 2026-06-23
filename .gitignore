@@ -47,3 +47,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Tài liệu chỉ đọc ở local, không đẩy lên GitHub
+docs/

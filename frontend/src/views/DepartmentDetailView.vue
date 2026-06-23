@@ -54,19 +54,19 @@ watch(
         <span class="label">🏢 Toà nhà</span><span>{{ dep.buildingName }}</span>
       </div>
       <div class="info-row">
-        <span class="label">🛗 Tầng</span><span>Tầng {{ dep.floor }}</span>
+        <span class="label">Tầng</span><span>Tầng {{ dep.floor }}</span>
       </div>
       <div class="info-row">
-        <span class="label">🚪 Phòng</span><span>{{ dep.room }}</span>
+        <span class="label">Phòng</span><span>{{ dep.room }}</span>
       </div>
       <div class="info-row">
-        <span class="label">🕒 Giờ làm việc</span><span>{{ dep.hours }}</span>
+        <span class="label">Giờ làm việc</span><span>{{ dep.hours }}</span>
       </div>
     </section>
 
     <!-- Sơ đồ tầng -->
     <section class="card block">
-      <h2 class="block-title">🗺️ Sơ đồ tầng {{ dep.floor }}</h2>
+      <h2 class="block-title">Sơ đồ tầng {{ dep.floor }}</h2>
       <FloorMap
         :building="dep.building"
         :floor="dep.floor"
@@ -76,7 +76,7 @@ watch(
 
     <!-- Hướng dẫn path -->
     <section class="card block">
-      <h2 class="block-title">🧭 Hướng dẫn đường đi</h2>
+      <h2 class="block-title">Hướng dẫn đường đi</h2>
       <DirectionSteps
         :steps="dep.directions"
         :destination="`${dep.name} — Phòng ${dep.room}`"

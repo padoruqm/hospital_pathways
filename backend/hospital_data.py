@@ -1,30 +1,8 @@
-"""
-Dữ liệu bệnh viện (mock) — CHỈ chứa dữ liệu, không có logic xử lý.
-
-File này đóng vai trò như một "cơ sở dữ liệu" tĩnh trong bộ nhớ. Mọi thao tác trên
-dữ liệu (đọc, tìm kiếm, thêm/sửa/xoá, thống kê) nằm ở ``repository.py``; các hàm chuẩn
-hoá chuỗi nằm ở ``text_utils.py``. Tách như vậy để file dữ liệu gọn, dễ đọc và dễ sửa.
-
-Cấu trúc mỗi bản ghi được thiết kế để dùng lại ở các giai đoạn sau:
-
-- ``keywords`` / ``symptoms``  -> phục vụ tìm kiếm và RAG chatbot (Hướng A).
-- ``floor`` / ``pos``          -> phục vụ vẽ sơ đồ tầng SVG và đồ thị tìm đường (điểm cộng).
-- ``directions``               -> hướng dẫn đường đi từng bước dạng text.
-
-Mỗi phòng có toạ độ ``pos`` (x, y) trong hệ 0..100 của từng tầng để frontend vẽ
-sơ đồ mà không cần ảnh thật — sơ đồ chỉ mang tính minh hoạ, có thể thay sau.
-"""
-
-# Tên các toà nhà trong khuôn viên
 BUILDINGS = {
     "A": "Nhà A — Khu khám & chẩn đoán",
     "B": "Nhà B — Khu điều trị & xét nghiệm",
 }
 
-# ---------------------------------------------------------------------------
-# Danh sách khoa / phòng (mock). Tối thiểu đề yêu cầu 10–15, ở đây để 20 cho
-# việc test tìm kiếm có ý nghĩa hơn.
-# ---------------------------------------------------------------------------
 DEPARTMENTS = [
     {
         "id": "tiep-don",
@@ -380,7 +358,6 @@ DEPARTMENTS = [
     },
 ]
 
-# Sảnh / điểm mốc dùng cho hướng dẫn đường đi và (sau này) đồ thị tìm đường.
 LANDMARKS = {
     "cua-chinh": {"name": "Cửa chính Nhà A", "floor": 1, "building": "A", "pos": {"x": 50, "y": 90}},
     "thang-may-A": {"name": "Thang máy Nhà A", "floor": 1, "building": "A", "pos": {"x": 50, "y": 55}},

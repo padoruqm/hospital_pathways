@@ -1,16 +1,7 @@
-"""Chatbot RAG (Retrieval-Augmented Generation) tư vấn khoa khám.
+"""
+  Luồng RAG trong file này gồm 5 bước (đọc theo thứ tự các phần đánh số bên dưới):
 
-==========================================================================
-RAG LÀ GÌ & VÌ SAO CẦN?
-==========================================================================
-Bản chatbot ở ``ai.py`` nhồi TOÀN BỘ 20 khoa vào System Instruction. Cách đó đơn giản
-nhưng không mở rộng được: khi bệnh viện có hàng trăm khoa/quy định, prompt sẽ quá dài,
-tốn token và model dễ "lạc". RAG giải quyết bằng cách: **chỉ lấy vài đoạn tài liệu liên
-quan nhất tới câu hỏi rồi mới đưa cho LLM trả lời.**    
-
-Luồng RAG trong file này gồm 5 bước (đọc theo thứ tự các phần đánh số bên dưới):
-
-  (1) TÀI LIỆU      : đọc file kiến thức ``data_hospital.md`` (sinh từ hospital_data).
+  (1) TÀI LIỆU      : đọc file kiến thức ``data_hospital.md``.
   (2) CHUNKING      : cắt tài liệu thành các "đoạn" (chunk) — ở đây mỗi khoa = 1 chunk.
   (3) EMBEDDING     : biến mỗi chunk thành 1 vector số (Gemini text-embedding-004).
   (4) VECTOR STORE  : lưu các vector trong bộ nhớ + tìm theo độ tương đồng cosine.
@@ -40,12 +31,12 @@ load_dotenv()
 
 ai_rag_bp = Blueprint("ai_rag", __name__)
 
-# Model có thể đổi qua biến môi trường, không cần sửa code.
+# Model có thể đổi qua biến env
 CHAT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.1-flash-lite")
 EMBED_MODEL = os.environ.get("GEMINI_EMBED_MODEL", "gemini-embedding-001")
 TOP_K = int(os.environ.get("RAG_TOP_K", "4"))  # số chunk lấy ra cho mỗi câu hỏi
 
-# File tài liệu kiến thức của RAG. Sinh từ hospital_data nếu chưa có (xem build_document).
+# File tài liệu kiến thức của RAG.
 DOC_PATH = Path(__file__).with_name("data_hospital.md")
 
 
@@ -94,21 +85,13 @@ def build_document() -> str:
     return "\n\n".join(parts) + "\n"
 
 def ensure_document() -> str:
-    """Đảm bảo file data_hospital.md tồn tại (tự sinh nếu thiếu) rồi trả nội dung."""
     if not DOC_PATH.exists():
         DOC_PATH.write_text(build_document(), encoding="utf-8")
     return DOC_PATH.read_text(encoding="utf-8")
 
 
-# ==========================================================================
-# (2) CHUNKING — cắt tài liệu thành các đoạn
-# --------------------------------------------------------------------------
-# Vì sao cắt theo từng khoa (mỗi mục "## ...")? Vì mỗi khoa là một đơn vị ngữ nghĩa
-# trọn vẹn, độ dài vừa phải. Chunk quá to -> nhiễu, kém chính xác; quá nhỏ (vd từng
-# dòng) -> mất ngữ cảnh. Cắt theo mục là điểm cân bằng tự nhiên cho dữ liệu này.
-# ==========================================================================
+# (2) CHUNKING 
 def chunk_document(text: str) -> list[str]:
-    """Tách markdown thành các chunk theo mỗi tiêu đề cấp 2 (dòng bắt đầu bằng '## ')."""
     chunks: list[str] = []
     current: list[str] = []
     for line in text.splitlines():
@@ -131,8 +114,6 @@ def _chunk_title(chunk: str) -> str:
 
 def _chunk_id(chunk: str) -> str:
     """Lấy mã khoa (id) từ dòng '- Mã (id): ...' để frontend liên kết sang trang chi tiết.
-
-    Đoạn 'Thông tin chung về toà nhà' không có id -> trả về "" (không liên kết được).
     """
     for line in chunk.splitlines():
         if line.startswith("- Mã (id):"):
@@ -140,14 +121,10 @@ def _chunk_id(chunk: str) -> str:
     return ""
 
     
-# ==========================================================================
-# (3) EMBEDDING — biến văn bản thành vector số
-# --------------------------------------------------------------------------
+# (3) EMBEDDING
 # Embedding ánh xạ một đoạn text -> vector ~768 chiều, sao cho các đoạn có nghĩa
 # gần nhau thì vector gần nhau. Ta dùng model text-embedding-004 của Gemini.
 # Dùng task_type khác nhau cho tài liệu (RETRIEVAL_DOCUMENT) và câu hỏi (RETRIEVAL_QUERY)
-# để chất lượng truy hồi tốt hơn (đây là khuyến nghị của Google).
-# ==========================================================================
 _client = None
 
 def _get_client():
@@ -176,14 +153,8 @@ def _embed(texts: list[str], task_type: str) -> list[list[float]]:
     return [e.values for e in resp.embeddings]
 
 
-# ==========================================================================
-# (4) VECTOR STORE — kho vector trong bộ nhớ + tìm theo cosine
-# --------------------------------------------------------------------------
-# Với 20 chunk, một danh sách trong bộ nhớ là quá đủ; không cần CSDL vector nặng.
-# (Khi dữ liệu lớn, có thể thay bằng FAISS / Chroma / pgvector — phần còn lại giữ nguyên.)
-# Độ tương đồng dùng COSINE: đo góc giữa 2 vector, càng gần 1 càng giống nhau.
-# ==========================================================================
-# Mỗi phần tử: {"title": str, "text": str, "vector": list[float]}
+# (4) VECTOR STORE — kho vector trong bộ nhớ + độ tương đồng dùng cosine
+# Với 20 chunk, em dùng 1 danh sách, khong cần dùng CSDL vector
 _index: list[dict] | None = None
 
 
@@ -225,12 +196,7 @@ def retrieve(query: str, k: int = TOP_K) -> list[dict]:
     return scored[:k]
 
 
-# ==========================================================================
-# (5) LLM — sinh câu trả lời từ ngữ cảnh đã truy hồi
-# --------------------------------------------------------------------------
-# Chỉ đưa các chunk liên quan vào prompt và YÊU CẦU model chỉ dựa vào đó (grounding),
-# hạn chế "bịa". Câu hỏi + lịch sử hội thoại đi trong `contents`.
-# ==========================================================================
+# (5) LLM
 def _system_instruction(context_chunks: list[dict]) -> str:
     context = "\n\n".join(c["text"] for c in context_chunks)
     return (
@@ -262,10 +228,10 @@ def chat_with_rag():
     from google.genai import types
 
     try:
-        # (4) truy hồi ngữ cảnh liên quan
+        # truy hồi ngữ cảnh liên quan
         top = retrieve(message)
 
-        # (5) ghép lịch sử + câu hỏi rồi gọi LLM với ngữ cảnh đã truy hồi
+        # ghép lịch sử + câu hỏi rồi gọi LLM với ngữ cảnh đã truy hồi
         contents = []
         for turn in data.get("history", []):
             role = "model" if turn.get("role") == "assistant" else "user"
@@ -275,6 +241,7 @@ def chat_with_rag():
         contents.append(types.Content(role="user", parts=[types.Part(text=message)]))
 
         response = client_generate(contents, _system_instruction(top))
+
         return jsonify({
             "status": "success",
             "reply": response,
@@ -286,7 +253,7 @@ def chat_with_rag():
 
 
 def client_generate(contents, system_instruction: str) -> str:
-    """Gọi model sinh câu trả lời (tách riêng cho gọn)."""
+    """Gọi model sinh câu trả lời"""
     from google.genai import types
 
     client = _get_client()

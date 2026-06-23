@@ -22,7 +22,7 @@ const error = ref("");
 
 const suggestions = [
   "Tôi bị đau ngực, khó thở",
-  "Khám thai ở đâu?",
+  "Tôi mệt mỏi và khó ngủ liên tục",
   "Con tôi bị sốt cao",
   "Tôi đau đầu nhiều ngày",
 ];

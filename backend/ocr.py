@@ -1,19 +1,13 @@
-"""Hướng B — OCR quét Căn cước công dân (CCCD) để đăng ký khám nhanh.
-
-Pipeline (đúng các bước đề yêu cầu), bản cơ bản, KHÔNG train model:
-
+"""
   (1) TIỀN XỬ LÝ   : đọc ảnh, xoay theo EXIF, thu nhỏ nếu quá lớn, tăng tương phản.
-  (2) MODEL (OCR)  : PaddleOCR (PP-OCRv*, tiếng Việt) đọc toàn bộ chữ trên ảnh.
+  (2) MODEL (OCR)  : PaddleOCR model đọc toàn bộ chữ trên ảnh.
   (3) HẬU XỬ LÝ    : làm sạch các dòng text (bỏ khoảng trắng thừa, dòng rỗng).
-  (4) TRÍCH XUẤT   : dùng heuristic/regex lấy 4 trường: số CCCD, họ tên, ngày sinh, địa chỉ.
+  (4) TRÍCH XUẤT   : Lấy 4 trường: số CCCD, họ tên, ngày sinh, địa chỉ.
   (5) OUTPUT       : trả JSON các trường + danh sách dòng OCR thô (để đối chiếu).
 
-      Ảnh CCCD ─►(1)tiền xử lý─►(2)PaddleOCR─► dòng text ─►(3)làm sạch─►(4)regex ─► JSON
+      Ảnh CCCD ─► Tiền xử lý─► PaddleOCR ─► Dòng text ─► Làm sạch ─► Regex ─► JSON
 
-Vì PaddlePaddle CHƯA có bản cho Python 3.14, engine được import "lười" (lazy): nếu chưa
-cài được, endpoint /scan trả lỗi rõ ràng nhưng phần đăng ký (điền tay) vẫn dùng được.
-
-Endpoints (đăng ký dưới /api/ocr):
+Endpoints:
   POST /api/ocr/scan      (multipart: image)  -> { fields, raw_lines }
   POST /api/ocr/register  (JSON form + reason) -> { queue_number, department, directions }
 """
@@ -32,26 +26,22 @@ from text_utils import normalize, strip_accents
 
 ocr_bp = Blueprint("ocr", __name__)
 
-OCR_LANG = os.environ.get("OCR_LANG", "vi")  # PaddleOCR hỗ trợ tiếng Việt
-MAX_SIDE = 1600  # giới hạn cạnh dài của ảnh để OCR nhanh, ổn định
+OCR_LANG = os.environ.get("OCR_LANG", "vi") 
+MAX_SIDE = 1600  # giới hạn cạnh dài của ảnh để OCR nhanh
 
-
-# ==========================================================================
-# (2) MODEL — PaddleOCR (khởi tạo lười, dùng lại 1 lần để khỏi load lại)
-# ==========================================================================
+# PaddleOCR model lazy loads
 _engine = None
 _engine_error = ""
 
 
 def _get_engine():
-    """Tạo PaddleOCR một lần. Nếu chưa cài được thư viện -> trả None + lưu lý do."""
     global _engine, _engine_error
     if _engine is None and not _engine_error:
         try:
             from paddleocr import PaddleOCR
 
             _engine = PaddleOCR(lang=OCR_LANG, use_textline_orientation=False)
-        except Exception as e:  # ImportError (chưa cài) hoặc lỗi khởi tạo
+        except Exception as e: 
             _engine_error = (
                 "Chưa cài được PaddleOCR (cần Python <= 3.13 + `pip install -r "
                 "requirements-ocr.txt`). Bạn vẫn có thể nhập tay thông tin để đăng ký. "
@@ -60,18 +50,15 @@ def _get_engine():
     return _engine
 
 
-# ==========================================================================
-# (1) TIỀN XỬ LÝ — chuẩn hoá ảnh trước khi đưa vào OCR
-# ==========================================================================
+# Tiền xl ảnh
 def preprocess_pil(image_bytes: bytes):
-    """Trả về ảnh PIL đã tiền xử lý (xoay EXIF, thu nhỏ, tăng tương phản)."""
     from PIL import Image, ImageOps
 
     img = Image.open(io.BytesIO(image_bytes))
     img = ImageOps.exif_transpose(img)      # ảnh chụp điện thoại thường xoay theo EXIF
     img = img.convert("RGB")
 
-    # Thu nhỏ nếu cạnh dài vượt ngưỡng (ảnh quá to làm OCR chậm mà không lợi thêm).
+    # Thu nhỏ nếu cạnh dài vượt ngưỡng, tránh OCR chậm
     long_side = max(img.size)
     if long_side > MAX_SIDE:
         scale = MAX_SIDE / long_side
@@ -82,16 +69,13 @@ def preprocess_pil(image_bytes: bytes):
 
 
 def preprocess(image_bytes: bytes) -> str:
-    """Tiền xử lý rồi lưu ra file PNG tạm để PaddleOCR đọc, trả về đường dẫn."""
     img = preprocess_pil(image_bytes)
     tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
     img.save(tmp.name)
     return tmp.name
 
 
-# ==========================================================================
-# (3) HẬU XỬ LÝ — làm sạch danh sách dòng text
-# ==========================================================================
+# HẬU XỬ LÝ — làm sạch danh sách dòng text
 def postprocess(lines: list[str]) -> list[str]:
     cleaned = []
     for ln in lines:
@@ -101,10 +85,7 @@ def postprocess(lines: list[str]) -> list[str]:
     return cleaned
 
 
-# ==========================================================================
 # (4) TRÍCH XUẤT THÔNG TIN — heuristic/regex cho các trường CCCD
-# ==========================================================================
-# Mẫu ngày dd/mm/yyyy (chấp nhận dấu ngăn cách / - .). Dùng cho ngày sinh.
 _DATE_RE = re.compile(r"\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\b")
 
 
@@ -173,9 +154,7 @@ def extract_fields(lines: list[str]) -> dict:
     }
 
 
-# ==========================================================================
 # (5) OUTPUT — endpoint quét ảnh
-# ==========================================================================
 @ocr_bp.route("/scan", methods=["POST"])
 def scan():
     file = request.files.get("image")
@@ -203,10 +182,7 @@ def scan():
     return jsonify({"status": "success", "fields": fields, "raw_lines": lines})
 
 
-# ==========================================================================
 # ĐĂNG KÝ KHÁM — gợi ý khoa theo lý do + cấp số thứ tự ảo
-# ==========================================================================
-# Bộ đếm số thứ tự theo từng khoa (trong bộ nhớ, reset khi restart — đủ cho demo).
 _queue_counters: dict[str, int] = {}
 
 

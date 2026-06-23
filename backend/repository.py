@@ -1,17 +1,9 @@
-"""Lớp truy cập dữ liệu (repository) — mọi thao tác trên dữ liệu khoa/phòng.
-
-``app.py`` (tầng web) chỉ gọi các hàm ở đây, không đụng trực tiếp vào danh sách dữ
-liệu. Repository thao tác trên ``hospital_data.DEPARTMENTS`` và dùng ``text_utils`` để
-chuẩn hoá chuỗi khi tìm kiếm.
-
-Gồm 4 nhóm việc:
+"""
+Lớp truy cập dữ liệu (repository) — mọi thao tác trên dữ liệu khoa/phòng.
   1. Đọc dữ liệu       : get_all, get_by_id
   2. Tìm kiếm          : search
   3. Thêm/sửa/xoá      : validate, create_department, update_department, delete_department
   4. Thống kê lượt xem : record_view, get_stats
-
-Dữ liệu nằm trong bộ nhớ nên thay đổi (CRUD) có hiệu lực ngay trong phiên chạy và sẽ
-reset khi khởi động lại server — đủ cho demo và giữ code đơn giản.
 """
 
 from __future__ import annotations
@@ -25,7 +17,7 @@ _view_counts: dict[str, int] = {}
 REQUIRED_FIELDS = ("name", "category", "building", "floor", "room", "hours", "description")
 
 
-# --- 1. Đọc dữ liệu -------------------------------------------------------
+# 1. Đọc dữ liệu
 def get_all() -> list[dict]:
     return DEPARTMENTS
 
@@ -38,7 +30,7 @@ def building_name(code: str) -> str:
     return BUILDINGS.get(code, code)
 
 
-# --- 2. Tìm kiếm ----------------------------------------------------------
+# 2. Tìm kiếm 
 def _searchable_text(dep: dict) -> str:
     """Gộp các trường tìm kiếm của một khoa rồi chuẩn hoá thành 1 chuỗi để so khớp."""
     parts = [dep["name"], dep["category"], dep["room"], *dep["keywords"], *dep.get("symptoms", [])]
@@ -46,15 +38,11 @@ def _searchable_text(dep: dict) -> str:
 
 
 def search(query: str, limit: int = 10) -> list[dict]:
-    """Tìm kiếm đơn giản: khoa nào CHỨA cụm tìm kiếm thì khớp.
-
-    Quy tắc gọn, dễ giải thích:
+    """Tìm kiếm logic:
+    Quy tắc:
       1. Chuẩn hoá truy vấn và dữ liệu như nhau (bỏ dấu, bỏ khoảng trắng/ký tự đặc biệt).
       2. Khoa khớp nếu chuỗi truy vấn là **chuỗi con** trong phần dữ liệu tìm kiếm được.
       3. Khoa khớp ngay ở **tên** thì xếp lên trước.
-
-    Nhờ so khớp nguyên cụm, "đau đầu" chỉ khớp khoa có cụm "đau đầu" (Nội thần kinh),
-    còn "đau bụng" khớp khoa có cụm "đau bụng" (Nội tổng quát, Sản) — không lẫn nhau.
     """
     q = normalize(query)
     if not q:
@@ -64,13 +52,13 @@ def search(query: str, limit: int = 10) -> list[dict]:
     for dep in DEPARTMENTS:
         if q in _searchable_text(dep):
             in_name = q in normalize(dep["name"])
-            matches.append((0 if in_name else 1, dep))  # 0 = khớp ở tên -> ưu tiên
+            matches.append((0 if in_name else 1, dep))  # 0 = khớp ở tên thì ưu tiên
 
     matches.sort(key=lambda pair: pair[0])
     return [dep for _, dep in matches[:limit]]
 
 
-# --- 3. Thêm / sửa / xoá --------------------------------------------------
+# 3. Thêm / sửa / xoá 
 def validate(payload: dict) -> list[str]:
     """Kiểm tra dữ liệu đầu vào, trả về danh sách lỗi (rỗng nếu hợp lệ)."""
     errors: list[str] = []
@@ -142,7 +130,6 @@ def update_department(dep_id: str, payload: dict) -> dict | None:
     dep.update(updated)
     return dep
 
-
 def delete_department(dep_id: str) -> bool:
     dep = get_by_id(dep_id)
     if dep is None:
@@ -152,7 +139,7 @@ def delete_department(dep_id: str) -> bool:
     return True
 
 
-# --- 4. Thống kê lượt xem -------------------------------------------------
+# 4. Thống kê lượt xem 
 def record_view(dep_id: str) -> None:
     _view_counts[dep_id] = _view_counts.get(dep_id, 0) + 1
 
