@@ -90,18 +90,8 @@ _DATE_RE = re.compile(r"\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\b")
 
 
 def _value_below_label(lines: list[str], keywords: list[str]) -> str:
-    """Lấy GIÁ TRỊ của một trường có nhãn trên CCCD.
-
-    Mấu chốt về bố cục CCCD: dòng NHÃN (vd "Họ và tên / Full name", "Nơi thường trú / ...")
-    đứng riêng một dòng, còn GIÁ TRỊ thật nằm ở DÒNG NGAY DƯỚI. Vì vậy hàm làm 3 việc:
-
-      1. Tìm dòng có chứa nhãn — so khớp KHÔNG DẤU (nhờ ``strip_accents``) nên "Họ và tên",
-         "ho va ten", "HO VA TEN" đều khớp.
-      2. Nếu dòng đó viết kiểu "nhãn: giá trị" (giá trị nằm cùng dòng) -> lấy phần sau ':'.
-      3. Nếu không có -> lấy luôn DÒNG KẾ TIẾP làm giá trị.
-
-    Cách này tránh được lỗi cũ (lấy nhầm phần nhãn tiếng Anh "Full name") mà vẫn rất gọn.
-    """
+    """Lấy giá trị 1 trường CCCD: nhãn đứng riêng dòng, giá trị nằm ở DÒNG DƯỚI
+    (hoặc sau dấu ':' nếu cùng dòng). Khớp nhãn không dấu."""
     for i, line in enumerate(lines):
         line_no_accent = strip_accents(line)
         if not any(kw in line_no_accent for kw in keywords):
@@ -117,14 +107,8 @@ def _value_below_label(lines: list[str], keywords: list[str]) -> str:
 
 
 def extract_fields(lines: list[str]) -> dict:
-    """Lấy 4 trường cần cho đăng ký khám: số CCCD, họ tên, ngày sinh, địa chỉ.
-
-    Mỗi trường một cách lấy đơn giản, dễ giải thích:
-      - Số CCCD  : dòng nào (sau khi bỏ ký tự không phải số) còn đúng 9 hoặc 12 chữ số.
-      - Ngày sinh: mẫu ngày dd/mm/yyyy đầu tiên trong toàn bộ chữ đọc được.
-      - Họ tên   : giá trị nằm dưới nhãn "Họ và tên / Full name".
-      - Địa chỉ  : giá trị nằm dưới nhãn "Nơi thường trú / Place of residence".
-    """
+    """Lấy 4 trường: số CCCD (dãy 9/12 số), ngày sinh (dd/mm/yyyy), họ tên & địa chỉ
+    (giá trị nằm dưới nhãn)."""
     # Số CCCD: CMND cũ 9 số, CCCD 12 số.
     id_number = ""
     for line in lines:
@@ -187,12 +171,8 @@ _queue_counters: dict[str, int] = {}
 
 
 def _suggest_department(reason: str) -> dict:
-    """Gợi ý khoa từ lý do khám (thường là cả câu).
-
-    Đếm xem từ khoá/triệu chứng của mỗi khoa xuất hiện trong lý do bao nhiêu lần,
-    chọn khoa nhiều nhất. Cách này hợp với câu dài (vd "tôi bị đau ngực, khó thở")
-    hơn so với tìm-kiếm-chuỗi-con vốn cần khớp nguyên cụm. Không khớp -> Quầy Tiếp đón.
-    """
+    """Gợi ý khoa từ lý do khám: đếm từ khoá/triệu chứng mỗi khoa xuất hiện trong lý do,
+    chọn khoa nhiều nhất; không khớp -> Quầy Tiếp đón."""
     reason_norm = normalize(reason)  # bỏ dấu + bỏ khoảng trắng
     best, best_score = None, 0
     for dep in repo.get_all():

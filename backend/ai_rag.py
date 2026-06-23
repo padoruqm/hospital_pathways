@@ -121,10 +121,7 @@ def _chunk_id(chunk: str) -> str:
     return ""
 
     
-# (3) EMBEDDING
-# Embedding ánh xạ một đoạn text -> vector ~768 chiều, sao cho các đoạn có nghĩa
-# gần nhau thì vector gần nhau. Ta dùng model text-embedding-004 của Gemini.
-# Dùng task_type khác nhau cho tài liệu (RETRIEVAL_DOCUMENT) và câu hỏi (RETRIEVAL_QUERY)
+# (3) EMBEDDING — biến text thành vector (đoạn nghĩa gần nhau thì vector gần nhau)
 _client = None
 
 def _get_client():
